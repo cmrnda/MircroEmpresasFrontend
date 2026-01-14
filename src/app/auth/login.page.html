@@ -1,0 +1,62 @@
+<div class="mx-auto max-w-md">
+  <div class="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+    <div class="mb-6">
+      <div class="text-lg font-semibold">Login</div>
+      <div class="text-sm text-slate-400">{{ mode() }}</div>
+    </div>
+
+    <form (ngSubmit)="submit()" [formGroup]="form" class="space-y-4">
+      <div class="space-y-2">
+        <label class="text-sm text-slate-300">Email</label>
+        <input
+          class="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-100 outline-none focus:border-slate-600"
+          formControlName="email"
+          placeholder="email"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm text-slate-300">Password</label>
+        <input
+          class="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-100 outline-none focus:border-slate-600"
+          formControlName="password"
+          placeholder="password"
+          type="password"
+        />
+      </div>
+
+      <div *ngIf="tenantsNeeded()?.length" class="space-y-2">
+        <label class="text-sm text-slate-300">Empresa</label>
+        <select
+          (change)="onEmpresaChange(($any($event.target)).value)"
+          [value]="selectedEmpresaId() ?? ''"
+          class="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-slate-100 outline-none focus:border-slate-600"
+        >
+          <option value="">Select</option>
+          <option *ngFor="let t of tenantsNeeded()" [value]="t.empresa_id">
+            {{ t.empresa_id }} - {{ t.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <button
+        [disabled]="loading()"
+        class="w-full rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-white disabled:opacity-60"
+        type="submit"
+      >
+        Login
+      </button>
+
+      <div *ngIf="error()" class="rounded-lg border border-red-900/40 bg-red-950/40 px-3 py-2 text-sm text-red-200">
+        {{ error() }}
+      </div>
+    </form>
+  </div>
+
+  <div class="mt-4 flex flex-wrap gap-2 text-sm text-slate-400">
+    <a class="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 hover:bg-slate-800"
+       routerLink="/login/platform">platform</a>
+    <a class="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 hover:bg-slate-800" routerLink="/login/tenant">tenant</a>
+    <a class="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 hover:bg-slate-800" routerLink="/login/client">client</a>
+  </div>
+</div>

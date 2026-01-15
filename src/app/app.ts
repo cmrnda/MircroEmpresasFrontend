@@ -1,13 +1,16 @@
 import {Component, inject} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {Router, RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
+import {Router, RouterOutlet} from '@angular/router';
 import {AuthFacade} from './core/auth/auth.facade';
 import {AuthStateService} from './core/auth/auth-state.service';
 
 @Component({
   standalone: true,
   selector: 'app-root',
-  imports: [CommonModule, RouterOutlet, RouterLinkActive, RouterLink],
+  imports: [
+    CommonModule,
+    RouterOutlet
+  ],
   templateUrl: './app.html'
 })
 export class App {
@@ -28,6 +31,8 @@ export class App {
   }
 
   public logout(): void {
-    this._auth.logout().subscribe(() => this._router.navigateByUrl('/login/platform'));
+    this._auth.logout().subscribe(() =>
+      this._router.navigateByUrl('/login/platform')
+    );
   }
 }

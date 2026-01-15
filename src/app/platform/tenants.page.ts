@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TenantsFacade } from './tenants.facade';
+import {Component, inject} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
+import {Router} from '@angular/router';
+import {TenantsFacade} from './tenants.facade';
 
 @Component({
   standalone: true,
@@ -11,18 +12,17 @@ import { TenantsFacade } from './tenants.facade';
 })
 export class TenantsPage {
   private readonly _fb = inject(FormBuilder);
-  private readonly _facade = inject(TenantsFacade);
-
-  public readonly loading = this._facade.loading;
-  public readonly error = this._facade.error;
-  public readonly tenants = this._facade.tenants;
-
   public readonly form = this._fb.group({
     nombre: ['', [Validators.required]],
     nit: [''],
     adminEmail: ['', [Validators.required, Validators.email]],
     adminPassword: ['', [Validators.required]]
   });
+  private readonly _facade = inject(TenantsFacade);
+  public readonly loading = this._facade.loading;
+  public readonly error = this._facade.error;
+  public readonly tenants = this._facade.tenants;
+  private readonly _router = inject(Router);
 
   public constructor() {
     this.reload();
@@ -40,7 +40,10 @@ export class TenantsPage {
     this._facade.create({
       nombre: v.nombre!,
       nit: v.nit || undefined,
-      admin: { email: v.adminEmail!, password: v.adminPassword! }
+      admin: {
+        email: v.adminEmail!,
+        password: v.adminPassword!
+      }
     }).subscribe(res => {
       if (!res) return;
       this.form.reset();
@@ -50,5 +53,12 @@ export class TenantsPage {
 
   public remove(id: number): void {
     this._facade.remove(id).subscribe(() => this.reload());
+  }
+
+  public goSubscriptions(empresaId: number): void {
+    this._router.navigate(
+      ['/platform/subscriptions'],
+      {queryParams: {empresa_id: empresaId}}
+    );
   }
 }

@@ -53,6 +53,27 @@ export const routes: Routes = [
       {path: 'password', loadComponent: () => import('./shared/me-password.page').then(m => m.MePasswordPage)}
     ]
   },
+  {
+    path: 'platform',
+    canActivate: [authGuard, typeGuard('platform')],
+    component: PlatformLayoutComponent,
+    children: [
+      {path: 'tenants', component: TenantsPage},
 
+      {
+        path: 'subscriptions',
+        loadComponent: () =>
+          import('./platform/platform-subscriptions.page')
+            .then(m => m.PlatformSubscriptionsPage)
+      },
+
+      {
+        path: 'reset-password',
+        loadComponent: () =>
+          import('./platform/reset-password.page')
+            .then(m => m.PlatformResetPasswordPage)
+      }
+    ]
+  },
   {path: '**', redirectTo: 'login/platform'}
 ];

@@ -1,0 +1,38 @@
+<div class="min-h-screen bg-slate-100 text-slate-900">
+  <header class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
+    <div class="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
+      <a routerLink="/client/home" class="flex items-center gap-2 font-semibold">
+        <span class="material-symbols-outlined">shopping_bag</span>
+        MicroEmpresas
+      </a>
+
+      <nav class="ml-6 flex items-center gap-2">
+        <a routerLink="/client/home" routerLinkActive="bg-slate-100 text-slate-900"
+           class="rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">
+          Inicio
+        </a>
+
+        <a routerLink="/account/password" routerLinkActive="bg-slate-100 text-slate-900"
+           class="rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">
+          Mi password
+        </a>
+      </nav>
+
+      <div class="ml-auto flex items-center gap-3">
+        <div class="text-xs text-slate-500">
+          Tipo: {{ type() }}
+        </div>
+        <button (click)="logout()"
+                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+                type="button">
+          <span class="material-symbols-outlined text-base">logout</span>
+          Salir
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 py-6">
+    <router-outlet></router-outlet>
+  </main>
+</div>

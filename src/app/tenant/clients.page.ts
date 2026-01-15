@@ -7,50 +7,7 @@ import { ClientsApi, TenantClient } from './clients.api';
   standalone: true,
   selector: 'app-clients-page',
   imports: [CommonModule, ReactiveFormsModule],
-  template: `
-  <div style="max-width:1000px;margin:24px auto;padding:16px;">
-    <h2>Tenant clients</h2>
-
-    <form [formGroup]="form" (ngSubmit)="create()" style="display:flex;gap:8px;flex-wrap:wrap;">
-      <input formControlName="email" placeholder="email" />
-      <input formControlName="password" placeholder="password" type="password" />
-      <input formControlName="nombre_razon" placeholder="nombre_razon" />
-      <input formControlName="nit_ci" placeholder="nit_ci" />
-      <input formControlName="telefono" placeholder="telefono" />
-      <button type="submit" [disabled]="loading()">create</button>
-    </form>
-
-    <div *ngIf="error()" style="color:#ff6b6b;margin-top:8px;">error: {{ error() }}</div>
-
-    <div style="margin-top:12px;">
-      <button (click)="load()" [disabled]="loading()">reload</button>
-    </div>
-
-    <table style="width:100%;margin-top:12px;border-collapse:collapse;">
-      <thead>
-        <tr>
-          <th style="text-align:left;border-bottom:1px solid #333;">id</th>
-          <th style="text-align:left;border-bottom:1px solid #333;">email</th>
-          <th style="text-align:left;border-bottom:1px solid #333;">nombre</th>
-          <th style="text-align:left;border-bottom:1px solid #333;">active</th>
-          <th style="text-align:left;border-bottom:1px solid #333;">actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let c of items()">
-          <td style="padding:8px 0;">{{ c.cliente_id }}</td>
-          <td>{{ c.email }}</td>
-          <td>{{ c.nombre_razon }}</td>
-          <td>{{ c.activo }}</td>
-          <td style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 0;">
-            <button (click)="toggle(c)" [disabled]="loading()">toggle</button>
-            <button (click)="remove(c)" [disabled]="loading()">delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  `
+  templateUrl: './clients.page.html'
 })
 export class ClientsPage {
   private readonly _api = inject(ClientsApi);

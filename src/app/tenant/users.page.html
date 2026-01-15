@@ -1,0 +1,135 @@
+<div class="space-y-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <div class="text-sm text-slate-500">Tenant</div>
+      <div class="text-2xl font-semibold">Usuarios</div>
+      <div class="text-sm text-slate-500">Gestion de usuarios y roles</div>
+    </div>
+
+    <button
+      type="button"
+      (click)="load()"
+      [disabled]="loading()"
+      class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60"
+    >
+      <span class="material-symbols-outlined text-base">refresh</span>
+      Recargar
+    </button>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 lg:col-span-1">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-lg font-semibold">Nuevo usuario</div>
+          <div class="text-sm text-slate-500">Crea un usuario interno</div>
+        </div>
+        <span class="material-symbols-outlined text-slate-400">group_add</span>
+      </div>
+
+      <form class="mt-4 space-y-3" [formGroup]="form" (ngSubmit)="create()">
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-slate-700">Correo</label>
+          <input class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+                 formControlName="email" placeholder="usuario@empresa.com" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-slate-700">Contrasena</label>
+          <input class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+                 formControlName="password" type="password" placeholder="Contrasena" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-slate-700">Roles (separados por coma)</label>
+          <input class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+                 formControlName="roles" placeholder="SELLER,INVENTORY" />
+        </div>
+
+        <button type="submit"
+                [disabled]="loading() || form.invalid"
+                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60">
+          <span class="material-symbols-outlined text-base">add</span>
+          Crear usuario
+        </button>
+
+        <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ error() }}
+        </div>
+      </form>
+
+      <div *ngIf="tempPassword()" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div class="text-xs text-slate-500">Contrasena temporal</div>
+        <div class="mt-1 font-semibold text-slate-900">{{ tempPassword() }}</div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white lg:col-span-2">
+      <div class="flex items-center justify-between px-4 py-4 border-b border-slate-200">
+        <div>
+          <div class="text-lg font-semibold">Lista de usuarios</div>
+          <div class="text-sm text-slate-500">Usuarios del tenant</div>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="px-4 py-3 text-left font-medium">ID</th>
+              <th class="px-4 py-3 text-left font-medium">Correo</th>
+              <th class="px-4 py-3 text-left font-medium">Activo</th>
+              <th class="px-4 py-3 text-left font-medium">Roles</th>
+              <th class="px-4 py-3 text-right font-medium">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody class="divide-y divide-slate-200">
+            <tr *ngFor="let u of items()" class="hover:bg-slate-50">
+              <td class="px-4 py-3 text-slate-700">{{ u.usuario_id }}</td>
+              <td class="px-4 py-3 font-medium text-slate-900">{{ u.email }}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
+                      [ngClass]="u.tenant_activo ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'">
+                  {{ u.tenant_activo ? 'ACTIVO' : 'INACTIVO' }}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-slate-700">{{ u.roles.join(', ') }}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-end gap-2">
+                  <button type="button" (click)="toggle(u)" [disabled]="loading()"
+                          class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50 disabled:opacity-60">
+                    <span class="material-symbols-outlined text-base">toggle_on</span>
+                    Cambiar
+                  </button>
+
+                  <button type="button" (click)="reset(u)" [disabled]="loading()"
+                          class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50 disabled:opacity-60">
+                    <span class="material-symbols-outlined text-base">restart_alt</span>
+                    Reset
+                  </button>
+
+                  <button type="button" (click)="remove(u)" [disabled]="loading()"
+                          class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50 disabled:opacity-60">
+                    <span class="material-symbols-outlined text-base">delete</span>
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="items().length === 0">
+              <td class="px-4 py-10 text-center text-slate-500" colspan="5">
+                Sin registros
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="px-4 py-3 text-xs text-slate-500 border-t border-slate-200">
+        Total: {{ items().length }}
+      </div>
+    </div>
+  </div>
+</div>

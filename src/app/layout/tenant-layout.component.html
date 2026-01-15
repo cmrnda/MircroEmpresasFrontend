@@ -1,0 +1,73 @@
+<div class="min-h-screen bg-slate-100 text-slate-900 flex">
+  <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex md:flex-col">
+    <div class="px-5 py-4 flex items-center gap-2 font-semibold">
+      <span class="material-symbols-outlined">store</span>
+      Panel Empresa
+    </div>
+
+    <nav class="px-3 space-y-1">
+      <a class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50" routerLink="/tenant/users"
+         routerLinkActive="bg-slate-100 text-slate-900">
+        <span class="material-symbols-outlined text-base">group</span>
+        Usuarios
+      </a>
+
+      <a class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50" routerLink="/tenant/clients"
+         routerLinkActive="bg-slate-100 text-slate-900">
+        <span class="material-symbols-outlined text-base">person</span>
+        Clientes
+      </a>
+
+      <a class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50" routerLink="/tenant/password-resets"
+         routerLinkActive="bg-slate-100 text-slate-900">
+        <span class="material-symbols-outlined text-base">lock_reset</span>
+        Recuperar
+      </a>
+
+      <a class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50" routerLink="/account/password"
+         routerLinkActive="bg-slate-100 text-slate-900">
+        <span class="material-symbols-outlined text-base">manage_accounts</span>
+        Mi password
+      </a>
+    </nav>
+
+    <div class="mt-auto px-4 py-4 border-t border-slate-200 text-xs text-slate-500 space-y-2">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">badge</span>
+        <span>Tipo: {{ type() }}</span>
+      </div>
+
+      <div *ngIf="empresaId() !== null" class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-base">domain</span>
+        <span>Empresa: {{ empresaId() }}</span>
+      </div>
+
+      <button (click)="logout()"
+              class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+              type="button">
+        <span class="material-symbols-outlined text-base">logout</span>
+        Salir
+      </button>
+    </div>
+  </aside>
+
+  <div class="flex-1">
+    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
+      <div class="px-4 md:px-6 py-3 flex items-center gap-3">
+        <div class="md:hidden font-semibold flex items-center gap-2">
+          <span class="material-symbols-outlined">store</span>
+          Empresa
+        </div>
+
+        <div class="flex-1">
+          <div class="text-sm text-slate-500">Tenant</div>
+          <div class="text-lg font-semibold">Gestion interna</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="px-4 md:px-6 py-6">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

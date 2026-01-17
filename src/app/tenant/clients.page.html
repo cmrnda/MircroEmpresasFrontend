@@ -3,18 +3,20 @@
     <div>
       <div class="text-sm text-slate-500">Tenant</div>
       <div class="text-2xl font-semibold">Clientes</div>
-      <div class="text-sm text-slate-500">Registro y administracion de clientes</div>
+      <div class="text-sm text-slate-500">Gestion de clientes del tenant</div>
     </div>
 
-    <button
-      (click)="load()"
-      [disabled]="loading()"
-      class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60"
-      type="button"
-    >
-      <span class="material-symbols-outlined text-base">refresh</span>
-      Recargar
-    </button>
+    <div class="flex items-center gap-2">
+      <button
+        (click)="reload()"
+        [disabled]="loading()"
+        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60"
+        type="button"
+      >
+        <span class="material-symbols-outlined text-base">refresh</span>
+        Recargar
+      </button>
+    </div>
   </div>
 
   <div class="grid gap-4 lg:grid-cols-3">
@@ -22,48 +24,63 @@
       <div class="flex items-center justify-between">
         <div>
           <div class="text-lg font-semibold">Nuevo cliente</div>
-          <div class="text-sm text-slate-500">Crea un cliente para compras</div>
+          <div class="text-sm text-slate-500">Registro de cliente del tenant</div>
         </div>
         <span class="material-symbols-outlined text-slate-400">person_add</span>
       </div>
 
-      <form (ngSubmit)="create()" [formGroup]="form" class="mt-4 space-y-3">
+      <form (ngSubmit)="create()" [formGroup]="createForm" class="mt-4 space-y-3">
         <div class="space-y-1">
-          <label class="text-sm font-medium text-slate-700">Correo</label>
-          <input class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
-                 formControlName="email" placeholder="cliente@correo.com"/>
+          <label class="text-sm font-medium text-slate-700">Email</label>
+          <input
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+            formControlName="email"
+            placeholder="cliente@correo.com"
+          />
         </div>
 
         <div class="space-y-1">
           <label class="text-sm font-medium text-slate-700">Contrasena</label>
-          <input class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
-                 formControlName="password" placeholder="Contrasena" type="password"/>
+          <input
+            type="password"
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+            formControlName="password"
+            placeholder="Minimo recomendado 8"
+          />
         </div>
 
         <div class="space-y-1">
-          <label class="text-sm font-medium text-slate-700">Nombre o razon social</label>
-          <input class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
-                 formControlName="nombre_razon" placeholder="Ej: Juan Perez"/>
+          <label class="text-sm font-medium text-slate-700">Nombre o razon</label>
+          <input
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+            formControlName="nombre_razon"
+            placeholder="Ej: Juan Perez o Empresa SRL"
+          />
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div class="space-y-1">
-            <label class="text-sm font-medium text-slate-700">NIT/CI</label>
-            <input
-              class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
-              formControlName="nit_ci" placeholder="Opcional"/>
-          </div>
-          <div class="space-y-1">
-            <label class="text-sm font-medium text-slate-700">Telefono</label>
-            <input
-              class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
-              formControlName="telefono" placeholder="Opcional"/>
-          </div>
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-slate-700">NIT o CI</label>
+          <input
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+            formControlName="nit_ci"
+            placeholder="Opcional"
+          />
         </div>
 
-        <button [disabled]="loading() || form.invalid"
-                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-                type="submit">
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-slate-700">Telefono</label>
+          <input
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+            formControlName="telefono"
+            placeholder="Opcional"
+          />
+        </div>
+
+        <button
+          [disabled]="loading() || createForm.invalid"
+          class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+          type="submit"
+        >
           <span class="material-symbols-outlined text-base">add</span>
           Crear cliente
         </button>
@@ -75,10 +92,41 @@
     </div>
 
     <div class="rounded-2xl border border-slate-200 bg-white lg:col-span-2">
-      <div class="flex items-center justify-between px-4 py-4 border-b border-slate-200">
+      <div class="flex flex-col gap-3 px-4 py-4 border-b border-slate-200 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div class="text-lg font-semibold">Lista de clientes</div>
-          <div class="text-sm text-slate-500">Clientes del tenant</div>
+          <div class="text-lg font-semibold">Clientes registrados</div>
+          <div class="text-sm text-slate-500">Listado del tenant</div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+            <input
+              [value]="filterText()"
+              (input)="filterText.set(($any($event.target)).value)"
+              class="w-64 rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-slate-400"
+              placeholder="Buscar por id, email, nombre, nit, tel"
+              type="text"
+            />
+          </div>
+
+          <button
+            type="button"
+            (click)="toggleInclude()"
+            class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+          >
+            <span class="material-symbols-outlined text-base">filter_alt</span>
+            {{ includeInactivos() ? 'Incluye inactivos' : 'Solo activos' }}
+          </button>
+
+          <button
+            type="button"
+            (click)="clearSearch()"
+            class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+          >
+            <span class="material-symbols-outlined text-base">close</span>
+            Limpiar
+          </button>
         </div>
       </div>
 
@@ -87,52 +135,167 @@
           <thead class="bg-slate-50 text-slate-600">
           <tr>
             <th class="px-4 py-3 text-left font-medium">ID</th>
-            <th class="px-4 py-3 text-left font-medium">Correo</th>
-            <th class="px-4 py-3 text-left font-medium">Nombre</th>
+            <th class="px-4 py-3 text-left font-medium">Email</th>
+            <th class="px-4 py-3 text-left font-medium">Nombre o razon</th>
             <th class="px-4 py-3 text-left font-medium">Estado</th>
             <th class="px-4 py-3 text-right font-medium">Acciones</th>
           </tr>
           </thead>
 
           <tbody class="divide-y divide-slate-200">
-          <tr *ngFor="let c of items()" class="hover:bg-slate-50">
+          <tr *ngFor="let c of filteredClients()" class="hover:bg-slate-50">
             <td class="px-4 py-3 text-slate-700">{{ c.cliente_id }}</td>
             <td class="px-4 py-3 text-slate-700">{{ c.email }}</td>
             <td class="px-4 py-3 font-medium text-slate-900">{{ c.nombre_razon }}</td>
             <td class="px-4 py-3">
-                <span [ngClass]="c.activo ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'"
-                      class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium">
+                <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium" [ngClass]="statusBadgeClass(c.activo)">
                   {{ c.activo ? 'ACTIVO' : 'INACTIVO' }}
                 </span>
             </td>
+
             <td class="px-4 py-3">
               <div class="flex items-center justify-end gap-2">
-                <button (click)="toggle(c)" [disabled]="loading()" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50 disabled:opacity-60"
-                        type="button">
-                  <span class="material-symbols-outlined text-base">toggle_on</span>
-                  Cambiar
+                <button
+                  (click)="openEdit(c)"
+                  [disabled]="!c.activo"
+                  class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50 disabled:opacity-60"
+                  type="button"
+                >
+                  <span class="material-symbols-outlined text-base">edit</span>
+                  Editar
                 </button>
 
-                <button (click)="remove(c)" [disabled]="loading()" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50 disabled:opacity-60"
-                        type="button">
-                  <span class="material-symbols-outlined text-base">delete</span>
-                  Eliminar
+                <button
+                  *ngIf="c.activo"
+                  (click)="remove(c)"
+                  [disabled]="loading()"
+                  class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50 disabled:opacity-60"
+                  type="button"
+                >
+                  <span class="material-symbols-outlined text-base">block</span>
+                  Desactivar
+                </button>
+
+                <button
+                  *ngIf="!c.activo"
+                  (click)="restore(c)"
+                  [disabled]="loading()"
+                  class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50 disabled:opacity-60"
+                  type="button"
+                >
+                  <span class="material-symbols-outlined text-base">restart_alt</span>
+                  Restaurar
                 </button>
               </div>
             </td>
           </tr>
 
-          <tr *ngIf="items().length === 0">
+          <tr *ngIf="filteredClients().length === 0">
             <td class="px-4 py-10 text-center text-slate-500" colspan="5">
-              Sin registros
+              Sin resultados
             </td>
           </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="px-4 py-3 text-xs text-slate-500 border-t border-slate-200">
-        Total: {{ items().length }}
+      <div class="px-4 py-3 text-xs text-slate-500 border-t border-slate-200 flex items-center justify-between">
+        <div>Total: {{ clients().length }}</div>
+        <div>Mostrando: {{ filteredClients().length }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="editOpen()" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div class="w-full max-w-lg rounded-2xl bg-white border border-slate-200 shadow-xl">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <div>
+          <div class="text-lg font-semibold">Editar cliente</div>
+          <div class="text-sm text-slate-500">ID: {{ editing()?.cliente_id }}</div>
+        </div>
+
+        <button
+          type="button"
+          (click)="closeEdit()"
+          class="rounded-lg border border-slate-200 bg-white p-2 hover:bg-slate-50"
+        >
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <div class="px-5 py-4">
+        <form [formGroup]="editForm" class="space-y-3">
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Email</label>
+            <input
+              formControlName="email"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+              type="text"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Nombre o razon</label>
+            <input
+              formControlName="nombre_razon"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+              type="text"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">NIT o CI</label>
+            <input
+              formControlName="nit_ci"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+              type="text"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Telefono</label>
+            <input
+              formControlName="telefono"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+              type="text"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Nueva contrasena (opcional)</label>
+            <input
+              formControlName="password"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400"
+              type="password"
+              placeholder="Dejar vacio para no cambiar"
+            />
+          </div>
+
+          <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ error() }}
+          </div>
+        </form>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200">
+        <button
+          type="button"
+          (click)="closeEdit()"
+          class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+        >
+          <span class="material-symbols-outlined text-base">close</span>
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          (click)="saveEdit()"
+          [disabled]="loading() || editForm.invalid"
+          class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+        >
+          <span class="material-symbols-outlined text-base">save</span>
+          Guardar
+        </button>
       </div>
     </div>
   </div>

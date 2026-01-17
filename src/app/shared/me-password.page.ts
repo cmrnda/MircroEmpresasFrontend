@@ -1,7 +1,7 @@
-import {Component, inject, signal} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
-import {AuthApi} from '../core/auth/auth.api';
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthApi } from '../core/auth/auth.api';
 
 @Component({
   standalone: true,
@@ -10,15 +10,17 @@ import {AuthApi} from '../core/auth/auth.api';
   templateUrl: './me-password.page.html'
 })
 export class MePasswordPage {
+  private readonly _fb = inject(FormBuilder);
+  private readonly _api = inject(AuthApi);
+
   public readonly loading = signal(false);
   public readonly error = signal<string | null>(null);
   public readonly ok = signal(false);
-  private readonly _fb = inject(FormBuilder);
+
   public readonly form = this._fb.group({
     new_password: ['', [Validators.required, Validators.minLength(6)]],
     confirm: ['', [Validators.required]]
   });
-  private readonly _api = inject(AuthApi);
 
   public save(): void {
     this.ok.set(false);

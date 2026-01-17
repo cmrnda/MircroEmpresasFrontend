@@ -6,20 +6,20 @@
     </div>
 
     <nav class="px-3 space-y-1">
-      <a routerLink="/platform/tenants" routerLinkActive="bg-slate-100 text-slate-900"
-         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">
+      <a class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50" routerLink="/platform/tenants"
+         routerLinkActive="bg-slate-100 text-slate-900">
         <span class="material-symbols-outlined text-base">apartment</span>
         Empresas
       </a>
 
-      <a routerLink="/platform/reset-password" routerLinkActive="bg-slate-100 text-slate-900"
-         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">
+      <a class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50" routerLink="/platform/reset-password"
+         routerLinkActive="bg-slate-100 text-slate-900">
         <span class="material-symbols-outlined text-base">lock_reset</span>
         Reset password
       </a>
 
-      <a routerLink="/account/password" routerLinkActive="bg-slate-100 text-slate-900"
-         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">
+      <a class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50" routerLink="/account/password"
+         routerLinkActive="bg-slate-100 text-slate-900">
         <span class="material-symbols-outlined text-base">manage_accounts</span>
         Mi password
       </a>
@@ -31,7 +31,7 @@
         <span>Tipo: {{ type() }}</span>
       </div>
 
-      <div class="flex items-center gap-2" *ngIf="empresaId() !== null">
+      <div *ngIf="empresaId() !== null" class="flex items-center gap-2">
         <span class="material-symbols-outlined text-base">domain</span>
         <span>Empresa: {{ empresaId() }}</span>
       </div>

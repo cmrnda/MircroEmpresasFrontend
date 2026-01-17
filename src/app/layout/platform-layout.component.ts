@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthFacade } from '../core/auth/auth.facade';
@@ -14,8 +14,8 @@ export class PlatformLayoutComponent {
   private readonly _auth = inject(AuthFacade);
   private readonly _state = inject(AuthStateService);
 
-  public readonly type = computed(() => this._state.claims()?.type ?? null);
-  public readonly empresaId = computed(() => (this._state.claims() as any)?.empresa_id ?? null);
+  public readonly type = this._state.type;
+  public readonly empresaId = this._state.empresaId;
 
   public logout(): void {
     this._auth.logout();

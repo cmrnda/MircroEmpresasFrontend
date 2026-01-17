@@ -1,44 +1,60 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ApiClientService } from '../http/api-client.service';
+import {Injectable} from '@angular/core';
+import {Observable} from 'rxjs';
+import {HttpClient} from '@angular/common/http';
 
-export type LoginResponse = {
+const BASE = 'http://127.0.0.1:5000';
+
+export type PlatformLoginResponse = {
   access_token: string;
   refresh_token: string;
-  empresa_id?: number;
-  roles?: string[];
-  usuario?: any;
-  cliente?: any;
+  usuario: { usuario_id: number; email: string };
 };
 
-export type TenantRequiredResponse = {
-  error: 'empresa_required';
-  data: { tenants: Array<{ empresa_id: number; nombre: string }> };
+export type TenantLoginResponse = {
+  access_token: string;
+  refresh_token: string;
+  usuario: { usuario_id: number; email: string };
+  roles: string[];
+  empresa_id: number;
 };
 
-@Injectable({ providedIn: 'root' })
+export type ClientLoginResponse = {
+  access_token: string;
+  refresh_token: string;
+  cliente: { cliente_id: number; email: string };
+  empresa_id: number;
+};
+
+@Injectable({providedIn: 'root'})
 export class AuthApi {
-  public constructor(private readonly _api: ApiClientService) {}
-
-  public loginPlatform(email: string, password: string): Observable<LoginResponse> {
-    return this._api.post<LoginResponse>('/auth/platform/login', { email, password });
+  public constructor(private readonly _http: HttpClient) {
   }
 
-  public loginTenant(email: string, password: string, empresaId?: number): Observable<LoginResponse> {
-    const headers = empresaId ? { 'X-Empresa-Id': String(empresaId) } : undefined;
-    return this._api.post<LoginResponse>('/auth/tenant/login', { email, password }, headers);
+  public loginPlatform(payload: { email: string; password: string }): Observable<PlatformLoginResponse> {
+    return this._http.post<PlatformLoginResponse>(`${BASE}/auth/platform/login`, payload);
   }
 
-  public loginClient(email: string, password: string, empresaId?: number): Observable<LoginResponse> {
-    const headers = empresaId ? { 'X-Empresa-Id': String(empresaId) } : undefined;
-    return this._api.post<LoginResponse>('/auth/client/login', { email, password }, headers);
+  public loginTenant(payload: {
+    email: string;
+    password: string;
+    empresa_id?: number | null
+  }): Observable<TenantLoginResponse> {
+    return this._http.post<TenantLoginResponse>(`${BASE}/auth/tenant/login`, payload);
+  }
+
+  public loginClient(payload: {
+    email: string;
+    password: string;
+    empresa_id: number
+  }): Observable<ClientLoginResponse> {
+    return this._http.post<ClientLoginResponse>(`${BASE}/auth/client/login`, payload);
   }
 
   public logout(): Observable<{ ok: boolean }> {
-    return this._api.post<{ ok: boolean }>('/auth/logout', {});
+    return this._http.post<{ ok: boolean }>(`${BASE}/auth/logout`, {});
   }
 
-  public changeMyPassword(newPassword: string): Observable<{ ok: boolean }> {
-    return this._api.put<{ ok: boolean }>('/auth/me/password', { new_password: newPassword });
+  public changeMyPassword(payload: { new_password: string }): Observable<{ ok: boolean }> {
+    return this._http.put<{ ok: boolean }>(`${BASE}/auth/me/password`, payload);
   }
 }

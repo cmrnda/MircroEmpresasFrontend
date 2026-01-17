@@ -1,0 +1,59 @@
+<div class="min-h-screen bg-slate-950 text-slate-100">
+  <div class="border-b border-slate-800 bg-slate-900">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <div class="flex items-center gap-3">
+        <div class="text-sm font-semibold">Tenant</div>
+        <div class="text-xs text-slate-400">empresa: {{ empresaId() }}</div>
+      </div>
+
+      <button
+        (click)="logout()"
+        class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs hover:bg-slate-700"
+        type="button"
+      >
+        Logout
+      </button>
+    </div>
+  </div>
+
+  <div class="mx-auto grid max-w-6xl grid-cols-12 gap-4 px-4 py-4">
+    <aside class="col-span-12 md:col-span-3">
+      <div class="rounded-2xl border border-slate-800 bg-slate-900 p-3">
+        <div class="mb-2 text-xs font-semibold text-slate-300">Menu</div>
+
+        <nav class="flex flex-col gap-1 text-sm">
+          <a class="rounded-lg px-3 py-2 hover:bg-slate-800" routerLink="/tenant/products"
+             routerLinkActive="bg-slate-800">
+            Products
+          </a>
+          <a class="rounded-lg px-3 py-2 hover:bg-slate-800" routerLink="/tenant/categories"
+             routerLinkActive="bg-slate-800">
+            Categories
+          </a>
+          <a class="rounded-lg px-3 py-2 hover:bg-slate-800" routerLink="/tenant/inventory"
+             routerLinkActive="bg-slate-800">
+            Inventory
+          </a>
+          <a class="rounded-lg px-3 py-2 hover:bg-slate-800" routerLink="/tenant/orders"
+             routerLinkActive="bg-slate-800">
+            Orders
+          </a>
+
+          <div class="my-2 border-t border-slate-800"></div>
+
+          <a class="rounded-lg px-3 py-2 hover:bg-slate-800" routerLink="/tenant/clients"
+             routerLinkActive="bg-slate-800">
+            Clients
+          </a>
+          <a class="rounded-lg px-3 py-2 hover:bg-slate-800" routerLink="/tenant/users" routerLinkActive="bg-slate-800">
+            Users
+          </a>
+        </nav>
+      </div>
+    </aside>
+
+    <main class="col-span-12 md:col-span-9">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

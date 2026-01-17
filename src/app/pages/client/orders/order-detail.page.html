@@ -1,0 +1,66 @@
+<div class="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <div class="text-lg font-semibold">Order {{ ventaId() }}</div>
+      <div class="text-xs text-slate-400">Detail</div>
+    </div>
+    <a class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs hover:bg-slate-700" routerLink="/client/orders">
+      Back
+    </a>
+  </div>
+
+  <div *ngIf="vm.error()" class="mt-3 rounded-lg border border-rose-900 bg-rose-950 px-3 py-2 text-sm text-rose-200">
+    {{ vm.error() }}
+  </div>
+
+  <div *ngIf="vm.detail()" class="mt-4 grid gap-4">
+    <div class="rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm">
+      <div class="grid grid-cols-2 gap-2">
+        <div>estado: <span class="text-slate-300">{{ vm.detail()!.venta.estado }}</span></div>
+        <div>total: <span class="text-slate-300">{{ vm.detail()!.venta.total }}</span></div>
+        <div>fecha: <span class="text-slate-300">{{ vm.detail()!.venta.fecha_hora }}</span></div>
+        <div>confirmado_en: <span class="text-slate-300">{{ vm.detail()!.venta.confirmado_en }}</span></div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-950 p-3">
+      <div class="text-sm font-semibold mb-2">Detalles</div>
+      <div class="overflow-x-auto rounded-lg border border-slate-800">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-900 text-slate-300">
+          <tr>
+            <th class="px-3 py-2 text-left">producto</th>
+            <th class="px-3 py-2 text-left">cantidad</th>
+            <th class="px-3 py-2 text-left">precio</th>
+            <th class="px-3 py-2 text-left">subtotal</th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800">
+          <tr *ngFor="let d of vm.detail()!.detalles">
+            <td class="px-3 py-2">{{ d.producto_id }}</td>
+            <td class="px-3 py-2">{{ d.cantidad }}</td>
+            <td class="px-3 py-2">{{ d.precio_unit }}</td>
+            <td class="px-3 py-2">{{ d.subtotal }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-950 p-3">
+      <div class="text-sm font-semibold mb-2">Envio</div>
+
+      <div *ngIf="!vm.detail()!.envio" class="text-sm text-slate-400">
+        No envio data
+      </div>
+
+      <div *ngIf="vm.detail()!.envio" class="grid gap-2 text-sm">
+        <div>estado_envio: <span class="text-slate-300">{{ vm.detail()!.envio!.estado_envio }}</span></div>
+        <div>tracking: <span class="text-slate-300">{{ vm.detail()!.envio!.tracking }}</span></div>
+        <div>departamento: <span class="text-slate-300">{{ vm.detail()!.envio!.departamento }}</span></div>
+        <div>ciudad: <span class="text-slate-300">{{ vm.detail()!.envio!.ciudad }}</span></div>
+        <div>direccion: <span class="text-slate-300">{{ vm.detail()!.envio!.direccion_linea }}</span></div>
+      </div>
+    </div>
+  </div>
+</div>

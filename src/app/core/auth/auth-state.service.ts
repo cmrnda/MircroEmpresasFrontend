@@ -1,37 +1,69 @@
 import {computed, Injectable, signal} from '@angular/core';
-import {TokenStorageService} from './token-storage.service';
-import {decodeJwt, isExpired, JwtClaims} from './jwt-utils';
+
+export type AuthType = 'platform' | 'user' | 'client';
+
+export type AuthClaims = {
+  type: AuthType;
+  empresa_id?: number | null;
+  usuario_id?: number | null;
+  cliente_id?: number | null;
+  roles?: string[];
+};
+
+type StoredSession = {
+  access_token: string;
+  claims: AuthClaims;
+};
+
+const KEY = 'sp_auth_session_v1';
 
 @Injectable({providedIn: 'root'})
 export class AuthStateService {
-  private readonly _claims = signal<JwtClaims | null>(null);
+  public readonly token = signal<string | null>(null);
 
+  public readonly empresaId = signal<number | null>(null);
+  public readonly usuarioId = signal<number | null>(null);
+  public readonly clienteId = signal<number | null>(null);
+
+  private readonly _claims = signal<AuthClaims | null>(null);
   public readonly claims = this._claims.asReadonly();
 
-  public readonly isAuthenticated = computed(() => {
-    const c = this._claims();
-    return !!c && !isExpired(c);
-  });
-
   public readonly type = computed(() => this._claims()?.type ?? null);
-  public readonly empresaId = computed(() => this._claims()?.empresa_id ?? null);
-  public readonly roles = computed(() => this._claims()?.roles ?? []);
 
+  public readonly isAuthenticated = computed(() => !!this.token() && !!this._claims());
   public readonly isPlatform = computed(() => this._claims()?.type === 'platform');
   public readonly isTenantUser = computed(() => this._claims()?.type === 'user');
   public readonly isClient = computed(() => this._claims()?.type === 'client');
 
-  public constructor(private readonly _storage: TokenStorageService) {
-    const token = this._storage.getAccessToken();
-    if (token) this._claims.set(decodeJwt(token));
+  public constructor() {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    try {
+      const s = JSON.parse(raw) as StoredSession;
+      this.applyLogin(s.access_token, s.claims);
+    } catch {
+      localStorage.removeItem(KEY);
+    }
   }
 
-  public setAccessToken(accessToken: string): void {
-    this._claims.set(decodeJwt(accessToken));
+  public applyLogin(accessToken: string, claims: AuthClaims): void {
+    this.token.set(accessToken);
+    this._claims.set(claims);
+
+    this.empresaId.set((claims.empresa_id ?? null) as number | null);
+    this.usuarioId.set((claims.usuario_id ?? null) as number | null);
+    this.clienteId.set((claims.cliente_id ?? null) as number | null);
+
+    const s: StoredSession = {access_token: accessToken, claims};
+    localStorage.setItem(KEY, JSON.stringify(s));
   }
 
   public clear(): void {
+    this.token.set(null);
     this._claims.set(null);
-    this._storage.clear();
+    this.empresaId.set(null);
+    this.usuarioId.set(null);
+    this.clienteId.set(null);
+    localStorage.removeItem(KEY);
   }
 }

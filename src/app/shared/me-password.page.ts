@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthApi } from '../core/auth/auth.api';
 
@@ -18,33 +18,29 @@ export class MePasswordPage {
   public readonly ok = signal(false);
 
   public readonly form = this._fb.group({
-    new_password: ['', [Validators.required, Validators.minLength(6)]],
-    confirm: ['', [Validators.required]]
+    new_password: ['', [Validators.required, Validators.minLength(3)]]
   });
 
-  public save(): void {
-    this.ok.set(false);
-    this.error.set(null);
-
-    const v = this.form.value;
-    const p1 = v.new_password || '';
-    const p2 = v.confirm || '';
-    if (p1 !== p2) {
-      this.error.set('password_mismatch');
-      return;
-    }
+  public submit(): void {
+    if (this.form.invalid) return;
 
     this.loading.set(true);
+    this.error.set(null);
+    this.ok.set(false);
 
-    this._api.changeMyPassword(p1).subscribe({
+    const v = this.form.value;
+
+    this._api.changeMyPassword({
+      new_password: String(v.new_password || '')
+    }).subscribe({
       next: () => {
-        this.ok.set(true);
         this.loading.set(false);
+        this.ok.set(true);
         this.form.reset();
       },
-      error: (e) => {
-        this.error.set(e?.error?.error ?? 'change_failed');
+      error: (e: any) => {
         this.loading.set(false);
+        this.error.set(e?.error?.error ?? 'change_failed');
       }
     });
   }

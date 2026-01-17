@@ -1,10 +1,10 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
 
 @Component({
   standalone: true,
-  selector: 'app-client-home',
+  selector: 'app-client-home-page',
   imports: [CommonModule],
-  template: `<div style="max-width:600px;margin:40px auto;">client home</div>`
+  templateUrl: './home.page.html'
 })
 export class ClientHomePage {}

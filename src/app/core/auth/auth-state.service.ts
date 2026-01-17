@@ -1,8 +1,8 @@
-import {computed, Injectable, signal} from '@angular/core';
-import {TokenStorageService} from './token-storage.service';
-import {decodeJwt, isExpired, JwtClaims} from './jwt-utils';
+import { computed, Injectable, signal } from '@angular/core';
+import { TokenStorageService } from './token-storage.service';
+import { decodeJwt, isExpired, JwtClaims } from './jwt-utils';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class AuthStateService {
   private readonly _claims = signal<JwtClaims | null>(null);
 
@@ -16,6 +16,7 @@ export class AuthStateService {
   public readonly type = computed(() => this._claims()?.type ?? null);
   public readonly empresaId = computed(() => this._claims()?.empresa_id ?? null);
   public readonly roles = computed(() => this._claims()?.roles ?? []);
+  public readonly usuarioId = computed(() => this._claims()?.usuario_id ?? null);
 
   public readonly isPlatform = computed(() => this._claims()?.type === 'platform');
   public readonly isTenantUser = computed(() => this._claims()?.type === 'user');

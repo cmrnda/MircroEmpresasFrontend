@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { authGuard, typeGuard } from './core/auth/guards';
 import { LoginPage } from './auth/login.page';
 import { TenantsPage } from './platform/tenants.page';
-import { ForbiddenPage } from './shared/forbidden.page';
 import { PlatformLayoutComponent } from './layout/platform-layout.component';
 import { TenantLayoutComponent } from './layout/tenant-layout.component';
 import { ClientLayoutComponent } from './layout/client-layout.component';
@@ -10,8 +9,6 @@ import { ClientLayoutComponent } from './layout/client-layout.component';
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login/platform' },
   { path: 'login/:mode', component: LoginPage },
-
-  { path: 'forbidden', component: ForbiddenPage },
 
   {
     path: 'platform',
@@ -21,6 +18,12 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'tenants' },
 
       { path: 'tenants', component: TenantsPage },
+
+      {
+        path: 'clients',
+        loadComponent: () =>
+          import('./platform/platform-clients.page').then(m => m.PlatformClientsPage)
+      },
 
       {
         path: 'subscriptions',
@@ -42,7 +45,6 @@ export const routes: Routes = [
     component: TenantLayoutComponent,
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'users' },
-
       { path: 'users', loadComponent: () => import('./tenant/users.page').then(m => m.UsersPage) },
       { path: 'clients', loadComponent: () => import('./tenant/clients.page').then(m => m.ClientsPage) },
 

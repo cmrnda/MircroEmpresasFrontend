@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { API_BASE } from '../../../core/http/api-base';
 
 export type PublicCategory = {
@@ -48,6 +48,12 @@ export class ClientShopApi {
     if (args.page_size != null) qs.push(`page_size=${encodeURIComponent(String(args.page_size))}`);
 
     const qstr = qs.length ? `?${qs.join('&')}` : '';
-    return this._http.get<PublicProductsResponse>(`${API_BASE}/shop/${empresa_id}/products${qstr}`);
+
+    return this._http.get<PublicProductsResponse>(`${API_BASE}/shop/${empresa_id}/products${qstr}`).pipe(
+      map((res) => {
+        const items = (res.items || []).filter((p) => (p?.cantidad_actual ?? 0) > 0);
+        return { ...res, items };
+      })
+    );
   }
 }

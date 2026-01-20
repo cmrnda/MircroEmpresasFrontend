@@ -94,12 +94,16 @@ export class ClientShopFacade {
     this.loadProducts(p - 1);
   }
 
-  public next(): void {
-    const d = this.products();
-    const maxPage = Math.max(1, Math.ceil(d.total / d.page_size));
-    if (d.page >= maxPage) return;
-    this.loadProducts(d.page + 1);
-  }
+public next(): void {
+  const d = this.products();
+  const maxPageFromBackend = Math.max(1, Math.ceil(d.total / d.page_size));
+
+  if (d.items.length < d.page_size) return;
+  if (d.page >= maxPageFromBackend) return;
+
+  this.loadProducts(d.page + 1);
+}
+
 
   public imageUrl(p: ShopProduct): string | null {
     if (!p.primary_image_url) return null;

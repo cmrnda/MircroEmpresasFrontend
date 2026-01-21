@@ -1,13 +1,13 @@
-import {CommonModule} from '@angular/common';
-import {Component, computed, inject, signal} from '@angular/core';
-import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
-import {ActivatedRoute, Router} from '@angular/router';
-import {AuthFacade} from '../core/auth/auth.facade';
-import {AuthType} from '../core/auth/auth-state.service';
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AuthFacade } from '../core/auth/auth.facade';
+import { AuthType } from '../core/auth/auth-state.service';
 
 @Component({
   standalone: true,
-  selector: 'app-login-page',
+  selector: 'app-login',
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.page.html'
 })
@@ -36,25 +36,31 @@ export class LoginPage {
   });
 
   public constructor() {
-    this._route.paramMap.subscribe(p => {
-      const m = (p.get('mode') || 'platform') as AuthType;
-      if (m !== 'platform' && m !== 'user' && m !== 'client') {
-        this.mode.set('platform');
-      } else {
+    this._route.paramMap.subscribe(params => {
+      const m = (params.get('mode') || 'platform') as AuthType;
+
+      if (m === 'platform' || m === 'user' || m === 'client') {
         this.mode.set(m);
+      } else {
+        this.mode.set('platform');
       }
 
-      if (this.mode() === 'client') {
-        this.form.get('empresa_id')?.setValidators([Validators.required]);
+      const empresaCtrl = this.form.get('empresa_id');
+
+      if (this.mode() !== 'platform') {
+        empresaCtrl?.setValidators([Validators.required]);
       } else {
-        this.form.get('empresa_id')?.clearValidators();
+        empresaCtrl?.clearValidators();
+        empresaCtrl?.setValue(null);
       }
-      this.form.get('empresa_id')?.updateValueAndValidity();
+
+      empresaCtrl?.updateValueAndValidity();
+      this.error.set(null);
     });
   }
 
   public submit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.loading()) return;
 
     this.loading.set(true);
     this.error.set(null);
@@ -62,24 +68,36 @@ export class LoginPage {
     const m = this.mode();
     const v = this.form.value;
 
-    const payload: any = {
-      email: String(v.email || '').trim(),
-      password: String(v.password || '')
+    const payload: {
+      email: string;
+      password: string;
+      empresa_id?: number;
+    } = {
+      email: String(v.email).trim(),
+      password: String(v.password)
     };
 
-    if (m === 'client') payload.empresa_id = Number(v.empresa_id);
-    if (m === 'user' && v.empresa_id) payload.empresa_id = Number(v.empresa_id);
+    if (m !== 'platform') {
+      payload.empresa_id = Number(v.empresa_id);
+    }
 
-    this._auth.login(m, payload).subscribe((ok: boolean) => {
-      this.loading.set(false);
-      if (!ok) {
-        this.error.set('login_failed');
-        return;
+    this._auth.login(m, payload).subscribe({
+      next: ok => {
+        this.loading.set(false);
+
+        if (!ok) {
+          this.error.set('credenciales invalidas o empresa incorrecta');
+          return;
+        }
+
+        if (m === 'platform') this._router.navigate(['/platform']);
+        else if (m === 'user') this._router.navigate(['/tenant']);
+        else this._router.navigate(['/client']);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('error de conexion con el servidor');
       }
-
-      if (m === 'platform') this._router.navigate(['/platform']);
-      else if (m === 'user') this._router.navigate(['/tenant']);
-      else this._router.navigate(['/client']);
     });
   }
 

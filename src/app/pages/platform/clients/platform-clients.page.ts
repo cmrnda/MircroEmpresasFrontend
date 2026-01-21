@@ -1,8 +1,8 @@
-import {CommonModule} from '@angular/common';
-import {Component, computed, inject, signal} from '@angular/core';
-import {FormBuilder, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
-import {PlatformClientsFacade} from './platform-clients.facade';
-import {Empresa, TenantsApi} from '../tenant/tenants.api';
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { PlatformClientsFacade } from './platform-clients.facade';
+import { Empresa, TenantsApi } from '../tenant/tenants.api';
 
 @Component({
   standalone: true,
@@ -11,6 +11,7 @@ import {Empresa, TenantsApi} from '../tenant/tenants.api';
   templateUrl: './platform-clients.page.html'
 })
 export class PlatformClientsPage {
+
   private readonly _fb = inject(FormBuilder);
   private readonly _facade = inject(PlatformClientsFacade);
   private readonly _tenantsApi = inject(TenantsApi);
@@ -49,7 +50,10 @@ export class PlatformClientsPage {
   });
 
   public constructor() {
-    this._tenantsApi.list().subscribe(list => this.tenants.set(list ?? []));
+    this._tenantsApi.list().subscribe(res => {
+      this.tenants.set(res.items ?? []);
+    });
+
     this.reload();
   }
 
@@ -66,6 +70,7 @@ export class PlatformClientsPage {
 
   public create(): void {
     if (this.form.invalid) return;
+
     const v = this.form.value;
 
     this._facade.create({
@@ -89,7 +94,7 @@ export class PlatformClientsPage {
     nombre_razon: string;
     nit_ci?: string | null;
     telefono?: string | null;
-    activo: boolean
+    activo: boolean;
   }): void {
     this.editingId.set(row.cliente_id);
 

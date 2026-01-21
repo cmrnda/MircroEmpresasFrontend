@@ -1,5 +1,5 @@
-import {Injectable, signal} from '@angular/core';
-import {catchError, finalize, of, tap} from 'rxjs';
+import { Injectable, signal } from '@angular/core';
+import { catchError, finalize, of, tap } from 'rxjs';
 import {
   CreatePlatformClientRequest,
   PlatformClient,
@@ -7,24 +7,25 @@ import {
   UpdatePlatformClientRequest
 } from './platform-clients.api';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class PlatformClientsFacade {
+
   public readonly loading = signal(false);
   public readonly error = signal<string | null>(null);
   public readonly items = signal<PlatformClient[]>([]);
 
-  public constructor(private readonly _api: PlatformClientsApi) {
-  }
+  public constructor(private readonly _api: PlatformClientsApi) {}
 
   public load(opts?: { empresaId?: number; q?: string; includeInactivos?: boolean }) {
     this.loading.set(true);
     this.error.set(null);
 
     return this._api.list(opts).pipe(
-      tap(list => this.items.set(list ?? [])),
+      tap(res => this.items.set(res.items ?? [])),
       catchError(err => {
         this.error.set(err?.error?.error ?? 'load_failed');
-        return of([]);
+        this.items.set([]);
+        return of(null);
       }),
       finalize(() => this.loading.set(false))
     );

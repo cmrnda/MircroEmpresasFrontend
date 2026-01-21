@@ -1,4 +1,4 @@
-import {computed, Injectable, signal} from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 
 export type AuthType = 'platform' | 'user' | 'client';
 
@@ -17,8 +17,9 @@ type StoredSession = {
 
 const KEY = 'sp_auth_session_v1';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class AuthStateService {
+
   public readonly token = signal<string | null>(null);
 
   public readonly empresaId = signal<number | null>(null);
@@ -30,14 +31,26 @@ export class AuthStateService {
 
   public readonly type = computed(() => this._claims()?.type ?? null);
 
-  public readonly isAuthenticated = computed(() => !!this.token() && !!this._claims());
-  public readonly isPlatform = computed(() => this._claims()?.type === 'platform');
-  public readonly isTenantUser = computed(() => this._claims()?.type === 'user');
-  public readonly isClient = computed(() => this._claims()?.type === 'client');
+  public readonly isAuthenticated = computed(
+    () => !!this.token() && !!this._claims()
+  );
+
+  public readonly isPlatform = computed(
+    () => this._claims()?.type === 'platform'
+  );
+
+  public readonly isTenantUser = computed(
+    () => this._claims()?.type === 'user'
+  );
+
+  public readonly isClient = computed(
+    () => this._claims()?.type === 'client'
+  );
 
   public constructor() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return;
+
     try {
       const s = JSON.parse(raw) as StoredSession;
       this.applyLogin(s.access_token, s.claims);
@@ -50,12 +63,14 @@ export class AuthStateService {
     this.token.set(accessToken);
     this._claims.set(claims);
 
-    this.empresaId.set((claims.empresa_id ?? null) as number | null);
-    this.usuarioId.set((claims.usuario_id ?? null) as number | null);
-    this.clienteId.set((claims.cliente_id ?? null) as number | null);
+    this.empresaId.set(claims.empresa_id ?? null);
+    this.usuarioId.set(claims.usuario_id ?? null);
+    this.clienteId.set(claims.cliente_id ?? null);
 
-    const s: StoredSession = {access_token: accessToken, claims};
-    localStorage.setItem(KEY, JSON.stringify(s));
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({ access_token: accessToken, claims })
+    );
   }
 
   public clear(): void {

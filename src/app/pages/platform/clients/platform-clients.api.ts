@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {ApiClientService} from '../../../core/http/api-client.service';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { ApiClientService } from '../../../core/http/api-client.service';
 
 export type PlatformClient = {
   cliente_id: number;
@@ -31,18 +31,23 @@ export type UpdatePlatformClientRequest = {
   activo?: boolean;
 };
 
-@Injectable({providedIn: 'root'})
-export class PlatformClientsApi {
-  public constructor(private readonly _api: ApiClientService) {
-  }
+export type ListPlatformClientsResponse = {
+  items: PlatformClient[];
+};
 
-  public list(opts?: { empresaId?: number; q?: string; includeInactivos?: boolean }): Observable<PlatformClient[]> {
+@Injectable({ providedIn: 'root' })
+export class PlatformClientsApi {
+  public constructor(private readonly _api: ApiClientService) {}
+
+  public list(opts?: { empresaId?: number; q?: string; includeInactivos?: boolean }): Observable<ListPlatformClientsResponse> {
     const params: string[] = [];
+
     if (opts?.empresaId) params.push(`empresa_id=${encodeURIComponent(String(opts.empresaId))}`);
     if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
-    if (opts?.includeInactivos) params.push(`include_inactivos=true`);
+    if (opts?.includeInactivos) params.push('include_inactivos=true');
+
     const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<PlatformClient[]>(`/platform/clients${qs}`);
+    return this._api.get<ListPlatformClientsResponse>(`/platform/clients${qs}`);
   }
 
   public create(payload: CreatePlatformClientRequest): Observable<PlatformClient> {

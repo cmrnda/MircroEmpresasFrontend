@@ -1,37 +1,31 @@
 import { Injectable, signal } from '@angular/core';
 import { catchError, finalize, of, tap } from 'rxjs';
-import {
-  CreateTenantRequest,
-  Empresa,
-  TenantsApi,
-  UpdateTenantRequest
-} from './tenants.api';
+import { CreatePlatformPlanRequest, PlatformPlan, PlatformPlansApi, UpdatePlatformPlanRequest } from './platform-plans.api';
 
 @Injectable({ providedIn: 'root' })
-export class TenantsFacade {
-
+export class PlatformPlansFacade {
   public readonly loading = signal(false);
   public readonly error = signal<string | null>(null);
-  public readonly tenants = signal<Empresa[]>([]);
+  public readonly items = signal<PlatformPlan[]>([]);
 
-  public constructor(private readonly _api: TenantsApi) {}
+  public constructor(private readonly _api: PlatformPlansApi) {}
 
-  public load(q?: string, estado?: 'ACTIVA' | 'SUSPENDIDA') {
+  public load() {
     this.loading.set(true);
     this.error.set(null);
 
-    return this._api.list(q, estado).pipe(
-      tap(res => this.tenants.set(res.items ?? [])),
+    return this._api.list().pipe(
+      tap(res => this.items.set(res.items ?? [])),
       catchError(err => {
         this.error.set(err?.error?.error ?? 'load_failed');
-        this.tenants.set([]);
+        this.items.set([]);
         return of(null);
       }),
       finalize(() => this.loading.set(false))
     );
   }
 
-  public create(payload: CreateTenantRequest) {
+  public create(payload: CreatePlatformPlanRequest) {
     this.loading.set(true);
     this.error.set(null);
 
@@ -44,26 +38,13 @@ export class TenantsFacade {
     );
   }
 
-  public update(empresaId: number, payload: UpdateTenantRequest) {
+  public update(planId: number, payload: UpdatePlatformPlanRequest) {
     this.loading.set(true);
     this.error.set(null);
 
-    return this._api.update(empresaId, payload).pipe(
+    return this._api.update(planId, payload).pipe(
       catchError(err => {
         this.error.set(err?.error?.error ?? 'update_failed');
-        return of(null);
-      }),
-      finalize(() => this.loading.set(false))
-    );
-  }
-
-  public remove(empresaId: number) {
-    this.loading.set(true);
-    this.error.set(null);
-
-    return this._api.remove(empresaId).pipe(
-      catchError(err => {
-        this.error.set(err?.error?.error ?? 'remove_failed');
         return of(null);
       }),
       finalize(() => this.loading.set(false))

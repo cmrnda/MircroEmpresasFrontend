@@ -1,9 +1,9 @@
-import {Component, inject, signal} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Router} from '@angular/router';
-import {TenantsFacade} from './tenants.facade';
-import {Empresa} from './tenants.api';
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TenantsFacade } from './tenants.facade';
+import { Empresa } from './tenants.api';
 
 type EstadoFilter = 'ALL' | 'ACTIVA' | 'SUSPENDIDA';
 
@@ -14,6 +14,7 @@ type EstadoFilter = 'ALL' | 'ACTIVA' | 'SUSPENDIDA';
   templateUrl: './tenants.page.html'
 })
 export class TenantsPage {
+
   private readonly _fb = inject(FormBuilder);
   private readonly _facade = inject(TenantsFacade);
   private readonly _router = inject(Router);
@@ -46,9 +47,14 @@ export class TenantsPage {
   }
 
   public reload(): void {
-    const q = (this.filterText() || '').trim();
-    const estado = this.filterEstado() === 'ALL' ? undefined : this.filterEstado();
-    this._facade.load(q || undefined, estado).subscribe();
+    const q = (this.filterText() || '').trim() || undefined;
+
+    const estado =
+      this.filterEstado() === 'ALL'
+        ? undefined
+        : (this.filterEstado() as 'ACTIVA' | 'SUSPENDIDA');
+
+    this._facade.load(q, estado).subscribe();
   }
 
   public clearFilters(): void {
@@ -59,12 +65,16 @@ export class TenantsPage {
 
   public create(): void {
     if (this.form.invalid) return;
+
     const v = this.form.value;
 
     this._facade.create({
-      nombre: String(v.nombre || '').trim(),
-      nit: (String(v.nit || '').trim() || undefined) as string | undefined,
-      admin: {email: String(v.adminEmail || '').trim(), password: String(v.adminPassword || '')}
+      nombre: String(v.nombre).trim(),
+      nit: String(v.nit || '').trim() || undefined,
+      admin: {
+        email: String(v.adminEmail).trim(),
+        password: String(v.adminPassword)
+      }
     }).subscribe(res => {
       if (!res) return;
       this.form.reset();
@@ -77,7 +87,10 @@ export class TenantsPage {
   }
 
   public goSubscriptions(empresaId: number): void {
-    this._router.navigate(['/platform/subscriptions'], {queryParams: {empresa_id: empresaId}});
+    this._router.navigate(
+      ['/platform/subscriptions'],
+      { queryParams: { empresa_id: empresaId } }
+    );
   }
 
   public openEdit(t: Empresa): void {
@@ -100,13 +113,12 @@ export class TenantsPage {
     if (!t || this.editForm.invalid) return;
 
     const v = this.editForm.value;
-    const payload = {
-      nombre: String(v.nombre || '').trim() || undefined,
-      nit: String(v.nit || '').trim() || undefined,
-      estado: (v.estado ?? undefined) as string | undefined
-    };
 
-    this._facade.update(t.empresa_id, payload).subscribe(res => {
+    this._facade.update(t.empresa_id, {
+      nombre: String(v.nombre).trim(),
+      nit: String(v.nit || '').trim() || undefined,
+      estado: v.estado as string
+    }).subscribe(res => {
       if (!res) return;
       this.closeEdit();
       this.reload();
@@ -114,6 +126,8 @@ export class TenantsPage {
   }
 
   public estadoBadgeClass(estado: string): string {
-    return estado === 'ACTIVA' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700';
+    return estado === 'ACTIVA'
+      ? 'bg-emerald-50 text-emerald-700'
+      : 'bg-amber-50 text-amber-700';
   }
 }

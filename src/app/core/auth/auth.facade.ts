@@ -10,13 +10,16 @@ export class AuthFacade {
   private readonly _state = inject(AuthStateService);
   private readonly _router = inject(Router);
 
-  public login(mode: AuthType, payload: any) {
+  public login(
+    mode: AuthType,
+    payload: { email: string; password: string; empresa_id?: number }
+  ) {
     if (mode === 'platform') {
       return this._api.loginPlatform(payload).pipe(
-        tap((res) => {
+        tap(res => {
           const claims: AuthClaims = {
             type: 'platform',
-            usuario_id: res.usuario?.usuario_id ?? null,
+            usuario_id: res.usuario.usuario_id,
             roles: ['PLATFORM_ADMIN']
           };
           this._state.applyLogin(res.access_token, claims);
@@ -27,13 +30,17 @@ export class AuthFacade {
     }
 
     if (mode === 'user') {
-      return this._api.loginTenant(payload).pipe(
-        tap((res) => {
+      return this._api.loginTenant({
+        email: payload.email,
+        password: payload.password,
+        empresa_id: payload.empresa_id as number
+      }).pipe(
+        tap(res => {
           const claims: AuthClaims = {
             type: 'user',
-            usuario_id: res.usuario?.usuario_id ?? null,
-            empresa_id: res.empresa_id ?? null,
-            roles: res.roles ?? []
+            usuario_id: res.usuario.usuario_id,
+            empresa_id: res.empresa_id,
+            roles: res.roles
           };
           this._state.applyLogin(res.access_token, claims);
         }),
@@ -42,12 +49,16 @@ export class AuthFacade {
       );
     }
 
-    return this._api.loginClient(payload).pipe(
-      tap((res) => {
+    return this._api.loginClient({
+      email: payload.email,
+      password: payload.password,
+      empresa_id: payload.empresa_id as number
+    }).pipe(
+      tap(res => {
         const claims: AuthClaims = {
           type: 'client',
-          cliente_id: res.cliente?.cliente_id ?? null,
-          empresa_id: res.empresa_id ?? null
+          cliente_id: res.cliente.cliente_id,
+          empresa_id: res.empresa_id
         };
         this._state.applyLogin(res.access_token, claims);
       }),

@@ -25,7 +25,12 @@ export const routes: Routes = [
       {
         path: 'subscriptions',
         loadComponent: () =>
-          import('./subscriptions/platform-subscriptions.page').then(m => m.PlatformSubscriptionsPage)
+          import('./pages/platform/subscriptions/platform-subscriptions.page').then(m => m.PlatformSubscriptionsPage)
+      },
+      {
+        path: 'plans',
+        loadComponent: () =>
+          import('./pages/platform/plans/platform-plans.page').then(m => m.PlatformPlansPage)
       },
       {
         path: 'reset-password',

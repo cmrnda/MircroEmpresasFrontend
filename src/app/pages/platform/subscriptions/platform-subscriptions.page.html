@@ -1,0 +1,271 @@
+<section class="space-y-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div class="min-w-0">
+      <div class="text-sm text-slate-500">Platform</div>
+      <div class="text-2xl font-semibold">Suscripciones</div>
+      <div class="text-sm text-slate-500">Gestion de suscripcion por tenant</div>
+    </div>
+
+    <button
+      (click)="reload()"
+      [disabled]="loading()"
+      class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+      type="button"
+    >
+      <span class="material-symbols-outlined text-base">refresh</span>
+      Recargar
+    </button>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div class="px-4 py-4 border-b border-slate-200">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div class="text-lg font-semibold">Listado</div>
+          <div class="text-sm text-slate-500">Tenants, plan y estado</div>
+        </div>
+
+        <div class="w-full sm:w-auto grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
+          <div class="relative w-full sm:w-72">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+            <input
+              (input)="filterQ.set(($any($event.target)).value)"
+              [value]="filterQ()"
+              class="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              placeholder="Buscar por tenant, id o estado"
+              type="text"
+            />
+          </div>
+
+          <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+            <input
+              (change)="includeInactivos.set(($any($event.target)).checked); reload()"
+              [checked]="includeInactivos()"
+              type="checkbox"
+              class="h-4 w-4 rounded border-slate-300"
+            />
+            Ver inactivos
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[980px]">
+        <thead class="bg-slate-50 text-slate-600">
+        <tr>
+          <th class="px-4 py-3 text-left">Tenant</th>
+          <th class="px-4 py-3 text-left">Nombre</th>
+          <th class="px-4 py-3 text-left">Plan</th>
+          <th class="px-4 py-3 text-left">Estado</th>
+          <th class="px-4 py-3 text-left">Inicio</th>
+          <th class="px-4 py-3 text-left">Fin</th>
+          <th class="px-4 py-3 text-right">Acciones</th>
+        </tr>
+        </thead>
+
+        <tbody class="divide-y">
+        <tr *ngFor="let r of filtered()" class="hover:bg-slate-50">
+          <td class="px-4 py-3 text-slate-700">{{ r.empresa_id }}</td>
+          <td class="px-4 py-3">
+            <div class="font-medium text-slate-900">{{ r.empresa_nombre }}</div>
+            <div class="text-xs text-slate-500">Estado tenant: {{ r.empresa_estado }}</div>
+          </td>
+          <td class="px-4 py-3 text-slate-700">{{ planLabel(r.plan_id) }}</td>
+          <td class="px-4 py-3">
+              <span [ngClass]="badgeClass(r.suscripcion_estado)" class="rounded-full px-2 py-1 text-xs font-medium">
+                {{ r.suscripcion_estado || 'INACTIVA' }}
+              </span>
+          </td>
+          <td class="px-4 py-3 text-slate-700">{{ r.suscripcion_inicio || '-' }}</td>
+          <td class="px-4 py-3 text-slate-700">{{ r.suscripcion_fin || '-' }}</td>
+          <td class="px-4 py-3 text-right">
+            <button
+              (click)="openEdit(r)"
+              class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+              type="button"
+            >
+              <span class="material-symbols-outlined text-base">edit</span>
+              Editar
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="filtered().length === 0">
+          <td class="px-4 py-10 text-center text-slate-500" colspan="7">Sin resultados</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="error()" class="m-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      {{ error() }}
+    </div>
+  </div>
+
+  <div *ngIf="editOpen()" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <div class="min-w-0">
+          <div class="text-lg font-semibold">Editar suscripcion</div>
+          <div class="text-sm text-slate-500">Tenant: {{ editingEmpresaNombre() }} ({{ editingEmpresaId() }})</div>
+        </div>
+
+        <button
+          (click)="closeEdit()"
+          class="rounded-lg border border-slate-200 bg-white p-2 hover:bg-slate-50"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <div class="px-5 py-4 max-h-[calc(100dvh-12rem)] overflow-y-auto">
+        <form [formGroup]="editForm" class="space-y-4">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Plan</label>
+              <select
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="plan_id"
+              >
+                <option [ngValue]="null">Sin plan</option>
+                <option *ngFor="let p of plans()" [ngValue]="p.plan_id">
+                  {{ p.plan_id }} - {{ p.nombre }} ({{ p.precio }})
+                </option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Estado suscripcion</label>
+              <select
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="suscripcion_estado"
+              >
+                <option value="INACTIVA">INACTIVA</option>
+                <option value="ACTIVA">ACTIVA</option>
+                <option value="VENCIDA">VENCIDA</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Inicio</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="suscripcion_inicio"
+                type="date"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Fin</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="suscripcion_fin"
+                type="date"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Renovacion</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="suscripcion_renovacion"
+                type="date"
+              />
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div class="text-sm font-semibold text-slate-800">Ultimo pago (opcional)</div>
+            <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div class="space-y-1">
+                <label class="text-sm font-medium text-slate-700">Monto</label>
+                <input
+                  class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  formControlName="ultimo_pago_monto"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+
+              <div class="space-y-1">
+                <label class="text-sm font-medium text-slate-700">Moneda</label>
+                <input
+                  class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  formControlName="ultimo_pago_moneda"
+                  type="text"
+                />
+              </div>
+
+              <div class="space-y-1">
+                <label class="text-sm font-medium text-slate-700">Metodo</label>
+                <input
+                  class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  formControlName="ultimo_pago_metodo"
+                  type="text"
+                />
+              </div>
+
+              <div class="space-y-1">
+                <label class="text-sm font-medium text-slate-700">Estado pago</label>
+                <input
+                  class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  formControlName="ultimo_pago_estado"
+                  type="text"
+                />
+              </div>
+
+              <div class="space-y-1 sm:col-span-2">
+                <label class="text-sm font-medium text-slate-700">Referencia QR</label>
+                <input
+                  class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  formControlName="ultimo_pago_referencia_qr"
+                  type="text"
+                />
+              </div>
+
+              <div class="space-y-1 sm:col-span-2">
+                <label class="text-sm font-medium text-slate-700">Pagado en</label>
+                <input
+                  class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  formControlName="ultimo_pagado_en"
+                  type="text"
+                  placeholder="2026-01-21T19:00:00Z"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ error() }}
+          </div>
+        </form>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200">
+        <button
+          (click)="closeEdit()"
+          class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-base">close</span>
+          Cancelar
+        </button>
+
+        <button
+          (click)="saveEdit()"
+          [disabled]="loading() || editForm.invalid"
+          class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-base">save</span>
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

@@ -23,19 +23,19 @@
         <div class="flex items-center justify-between">
           <div>
             <div class="text-lg font-semibold">Nuevo cliente</div>
-            <div class="text-sm text-slate-500">Selecciona tenant y registra</div>
+            <div class="text-sm text-slate-500">Registrar y opcionalmente vincular a un tenant</div>
           </div>
           <span class="material-symbols-outlined text-slate-400">person_add</span>
         </div>
 
         <form (ngSubmit)="create()" [formGroup]="form" class="mt-4 space-y-3">
           <div class="space-y-1">
-            <label class="text-sm font-medium text-slate-700">Tenant</label>
+            <label class="text-sm font-medium text-slate-700">Tenant (opcional)</label>
             <select
               class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
               formControlName="empresa_id"
             >
-              <option [ngValue]="null">Seleccionar</option>
+              <option [ngValue]="null">Sin vincular</option>
               <option *ngFor="let t of tenants()" [ngValue]="t.empresa_id">
                 {{ t.empresa_id }} - {{ t.nombre }}
               </option>
@@ -135,7 +135,7 @@
                   (input)="filterQ.set(($any($event.target)).value); reload()"
                   [value]="filterQ()"
                   class="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                  placeholder="Buscar por nombre, email, nit, telefono"
+                  placeholder="Buscar por nombre o email"
                   type="text"
                 />
               </div>
@@ -154,11 +154,10 @@
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-sm min-w-[820px]">
+          <table class="w-full text-sm min-w-[780px]">
             <thead class="bg-slate-50 text-slate-600">
             <tr>
               <th class="px-4 py-3 text-left hidden sm:table-cell">Cliente</th>
-              <th class="px-4 py-3 text-left hidden sm:table-cell">Tenant</th>
               <th class="px-4 py-3 text-left">Nombre</th>
               <th class="px-4 py-3 text-left hidden sm:table-cell">Email</th>
               <th class="px-4 py-3 text-left">Estado</th>
@@ -169,12 +168,11 @@
             <tbody class="divide-y">
             <tr *ngFor="let c of filtered()" class="hover:bg-slate-50">
               <td class="px-4 py-3 hidden sm:table-cell text-slate-700">{{ c.cliente_id }}</td>
-              <td class="px-4 py-3 hidden sm:table-cell text-slate-700">{{ c.empresa_id }}</td>
 
               <td class="px-4 py-3">
                 <div class="font-medium text-slate-900">{{ c.nombre_razon }}</div>
                 <div class="mt-1 text-xs text-slate-500 sm:hidden">
-                  ID: {{ c.cliente_id }} · Tenant: {{ c.empresa_id }} · {{ c.email }}
+                  ID: {{ c.cliente_id }} · {{ c.email }}
                 </div>
               </td>
 
@@ -221,7 +219,7 @@
             </tr>
 
             <tr *ngIf="filtered().length === 0">
-              <td class="px-4 py-10 text-center text-slate-500" colspan="6">Sin resultados</td>
+              <td class="px-4 py-10 text-center text-slate-500" colspan="5">Sin resultados</td>
             </tr>
             </tbody>
           </table>
@@ -240,7 +238,7 @@
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
         <div class="min-w-0">
           <div id="edit-client-title" class="text-lg font-semibold">Editar cliente</div>
-          <div class="text-sm text-slate-500">Actualiza datos y tenant</div>
+          <div class="text-sm text-slate-500">Datos y vinculacion a tenants</div>
         </div>
 
         <button
@@ -255,18 +253,6 @@
 
       <div class="px-5 py-4 max-h-[calc(100dvh-12rem)] overflow-y-auto">
         <form [formGroup]="editForm" class="space-y-3">
-          <div class="space-y-1">
-            <label class="text-sm font-medium text-slate-700">Tenant</label>
-            <select
-              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-              formControlName="empresa_id"
-            >
-              <option *ngFor="let t of tenants()" [ngValue]="t.empresa_id">
-                {{ t.empresa_id }} - {{ t.nombre }}
-              </option>
-            </select>
-          </div>
-
           <div class="space-y-1">
             <label class="text-sm font-medium text-slate-700">Nombre</label>
             <input
@@ -326,6 +312,27 @@
               <option [ngValue]="true">ACTIVO</option>
               <option [ngValue]="false">INACTIVO</option>
             </select>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div class="text-sm font-semibold text-slate-800">Tenants</div>
+            <div class="text-xs text-slate-500">Marca para vincular, desmarca para desvincular</div>
+
+            <div class="mt-3 space-y-2">
+              <label *ngFor="let t of tenantChecks()" class="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-slate-300"
+                  [checked]="t.checked"
+                  (change)="toggleTenant(t.empresa_id, ($any($event.target)).checked)"
+                />
+                <span class="truncate">{{ t.empresa_id }} - {{ t.nombre }}</span>
+              </label>
+
+              <div *ngIf="tenantChecks().length === 0" class="text-sm text-slate-500">
+                No hay tenants cargados
+              </div>
+            </div>
           </div>
 
           <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

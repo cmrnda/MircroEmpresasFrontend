@@ -10,6 +10,7 @@
         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
         routerLink="/platform/tenants"
         routerLinkActive="bg-slate-100 text-slate-900"
+        [routerLinkActiveOptions]="{ exact: true }"
       >
         <span class="material-symbols-outlined text-base">apartment</span>
         Empresas
@@ -19,6 +20,7 @@
         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
         routerLink="/platform/clients"
         routerLinkActive="bg-slate-100 text-slate-900"
+        [routerLinkActiveOptions]="{ exact: true }"
       >
         <span class="material-symbols-outlined text-base">groups</span>
         Clientes
@@ -28,6 +30,7 @@
         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
         routerLink="/platform/subscriptions"
         routerLinkActive="bg-slate-100 text-slate-900"
+        [routerLinkActiveOptions]="{ exact: true }"
       >
         <span class="material-symbols-outlined text-base">payments</span>
         Suscripciones
@@ -35,8 +38,19 @@
 
       <a
         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
+        routerLink="/platform/plans"
+        routerLinkActive="bg-slate-100 text-slate-900"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <span class="material-symbols-outlined text-base">sell</span>
+        Planes
+      </a>
+
+      <a
+        class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
         routerLink="/platform/reset-password"
         routerLinkActive="bg-slate-100 text-slate-900"
+        [routerLinkActiveOptions]="{ exact: true }"
       >
         <span class="material-symbols-outlined text-base">lock_reset</span>
         Reset password
@@ -46,6 +60,7 @@
         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
         routerLink="/account/password"
         routerLinkActive="bg-slate-100 text-slate-900"
+        [routerLinkActiveOptions]="{ exact: true }"
       >
         <span class="material-symbols-outlined text-base">manage_accounts</span>
         Mi password
@@ -91,7 +106,7 @@
 
         <div class="flex-1 min-w-0">
           <div class="text-sm text-slate-500">Platform</div>
-          <div class="text-lg font-semibold truncate">Resumen de plataforma</div>
+          <div class="text-lg font-semibold truncate">{{ headerTitle() }}</div>
         </div>
       </div>
     </header>
@@ -108,6 +123,7 @@
           class="px-2 py-3 text-center text-xs text-slate-600 hover:bg-slate-50"
           routerLink="/platform/tenants"
           routerLinkActive="text-slate-900"
+          [routerLinkActiveOptions]="{ exact: true }"
         >
           <span class="material-symbols-outlined block text-base">apartment</span>
           Empresas
@@ -117,6 +133,7 @@
           class="px-2 py-3 text-center text-xs text-slate-600 hover:bg-slate-50"
           routerLink="/platform/clients"
           routerLinkActive="text-slate-900"
+          [routerLinkActiveOptions]="{ exact: true }"
         >
           <span class="material-symbols-outlined block text-base">groups</span>
           Clientes
@@ -126,6 +143,7 @@
           class="px-2 py-3 text-center text-xs text-slate-600 hover:bg-slate-50"
           routerLink="/platform/subscriptions"
           routerLinkActive="text-slate-900"
+          [routerLinkActiveOptions]="{ exact: true }"
         >
           <span class="material-symbols-outlined block text-base">payments</span>
           Subs
@@ -133,17 +151,19 @@
 
         <a
           class="px-2 py-3 text-center text-xs text-slate-600 hover:bg-slate-50"
-          routerLink="/platform/reset-password"
+          routerLink="/platform/plans"
           routerLinkActive="text-slate-900"
+          [routerLinkActiveOptions]="{ exact: true }"
         >
-          <span class="material-symbols-outlined block text-base">lock_reset</span>
-          Reset
+          <span class="material-symbols-outlined block text-base">sell</span>
+          Planes
         </a>
 
         <a
           class="px-2 py-3 text-center text-xs text-slate-600 hover:bg-slate-50"
           routerLink="/account/password"
           routerLinkActive="text-slate-900"
+          [routerLinkActiveOptions]="{ exact: true }"
         >
           <span class="material-symbols-outlined block text-base">manage_accounts</span>
           Cuenta

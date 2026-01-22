@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { API_BASE } from '../../../core/http/api-base';
+import { ApiClientService } from '../../../core/http/api-client.service';
 
 export type PublicCategory = {
   categoria_id: number;
@@ -30,30 +29,39 @@ export type PublicProductsResponse = {
 
 @Injectable({ providedIn: 'root' })
 export class ClientShopApi {
-  public constructor(private readonly _http: HttpClient) {}
+  public constructor(private readonly _api: ApiClientService) {}
 
   public listCategories(empresa_id: number): Observable<PublicCategory[]> {
-    return this._http.get<PublicCategory[]>(`${API_BASE}/shop/${empresa_id}/categories`);
+    return this._api.get<PublicCategory[]>(`/shop/${empresa_id}/categories`);
   }
 
   public listProducts(
     empresa_id: number,
-    args: { q?: string | null; categoria_id?: number | null; page?: number; page_size?: number } = {}
+    opts?: { q?: string; categoriaId?: number | null; page?: number; pageSize?: number }
   ): Observable<PublicProductsResponse> {
-    const qs: string[] = [];
+    const params: string[] = [];
 
-    if (args.q) qs.push(`q=${encodeURIComponent(String(args.q))}`);
-    if (args.categoria_id != null) qs.push(`categoria_id=${encodeURIComponent(String(args.categoria_id))}`);
-    if (args.page != null) qs.push(`page=${encodeURIComponent(String(args.page))}`);
-    if (args.page_size != null) qs.push(`page_size=${encodeURIComponent(String(args.page_size))}`);
+    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
+    if (opts?.categoriaId != null) params.push(`categoria_id=${encodeURIComponent(String(opts.categoriaId))}`);
+    if (opts?.page != null) params.push(`page=${encodeURIComponent(String(opts.page))}`);
+    if (opts?.pageSize != null) params.push(`page_size=${encodeURIComponent(String(opts.pageSize))}`);
 
-    const qstr = qs.length ? `?${qs.join('&')}` : '';
+    const qs = params.length ? `?${params.join('&')}` : '';
 
-    return this._http.get<PublicProductsResponse>(`${API_BASE}/shop/${empresa_id}/products${qstr}`).pipe(
+    return this._api.get<PublicProductsResponse>(`/shop/${empresa_id}/products${qs}`).pipe(
       map((res) => {
-        const items = (res.items || []).filter((p) => (p?.cantidad_actual ?? 0) > 0);
-        return { ...res, items };
+        const items = (res?.items || []).filter((p) => (p?.cantidad_actual ?? 0) > 0);
+        return {
+          items,
+          page: Number(res?.page ?? 1),
+          page_size: Number(res?.page_size ?? (opts?.pageSize ?? 20)),
+          total: Number(res?.total ?? items.length)
+        };
       })
     );
+  }
+
+  public getProduct(empresa_id: number, producto_id: number): Observable<ShopProduct> {
+    return this._api.get<ShopProduct>(`/shop/${empresa_id}/products/${producto_id}`);
   }
 }

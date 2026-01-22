@@ -1,13 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ClientShopApi, PublicCategory, PublicProductsResponse, ShopProduct } from './client-shop.api';
-import { AuthStateService } from '../../../core/auth/auth-state.service';
 
 export const BACKEND_ORIGIN = 'http://127.0.0.1:5000';
 
 @Injectable({ providedIn: 'root' })
 export class ClientShopFacade {
   private readonly _api = inject(ClientShopApi);
-  private readonly _state = inject(AuthStateService);
 
   public readonly backendOrigin = BACKEND_ORIGIN;
 
@@ -20,8 +18,15 @@ export class ClientShopFacade {
   public readonly q = signal<string>('');
   public readonly categoriaId = signal<number | null>(null);
 
-  private empresaId(): number {
-    return Number(this._state.empresaId() || 0);
+  private readonly _empresaId = signal<number | null>(null);
+
+  public setEmpresaId(empresa_id: number): void {
+    const n = Number(empresa_id);
+    this._empresaId.set(Number.isFinite(n) && n > 0 ? n : null);
+  }
+
+  private empresaId(): number | null {
+    return this._empresaId();
   }
 
   public loadInit(): void {
@@ -58,10 +63,10 @@ export class ClientShopFacade {
 
     this._api
       .listProducts(empresa_id, {
-        q: this.q().trim() || null,
-        categoria_id: this.categoriaId(),
+        q: this.q().trim() || undefined,
+        categoriaId: this.categoriaId(),
         page,
-        page_size: this.products().page_size
+        pageSize: this.products().page_size
       })
       .subscribe({
         next: (res) => {
@@ -81,7 +86,7 @@ export class ClientShopFacade {
 
   public setCategoria(v: string): void {
     const n = v === '' ? null : Number(v);
-    this.categoriaId.set(Number.isFinite(n as any) ? (n as any) : null);
+    this.categoriaId.set(Number.isFinite(n as any) ? n : null);
   }
 
   public search(): void {
@@ -94,19 +99,30 @@ export class ClientShopFacade {
     this.loadProducts(p - 1);
   }
 
-public next(): void {
-  const d = this.products();
-  const maxPageFromBackend = Math.max(1, Math.ceil(d.total / d.page_size));
+  public next(): void {
+    const d = this.products();
+    const maxPage = Math.max(1, Math.ceil(d.total / d.page_size));
 
-  if (d.items.length < d.page_size) return;
-  if (d.page >= maxPageFromBackend) return;
+    if (d.items.length < d.page_size) return;
+    if (d.page >= maxPage) return;
 
-  this.loadProducts(d.page + 1);
-}
-
+    this.loadProducts(d.page + 1);
+  }
 
   public imageUrl(p: ShopProduct): string | null {
-    if (!p.primary_image_url) return null;
-    return `${this.backendOrigin}${p.primary_image_url}`;
+    return this.normalizeImageUrl(p?.primary_image_url ?? null);
+  }
+
+  public normalizeImageUrl(u: string | null): string | null {
+    if (!u) return null;
+
+    const s = String(u).trim();
+    if (!s) return null;
+
+    if (/^https?:\/\//i.test(s)) return s;
+    if (/^data:/i.test(s)) return s;
+
+    if (s.startsWith('/')) return `${this.backendOrigin}${s}`;
+    return `${this.backendOrigin}/${s}`;
   }
 }

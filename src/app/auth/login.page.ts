@@ -3,7 +3,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthFacade } from '../core/auth/auth.facade';
-import { AuthType } from '../core/auth/auth-state.service';
+
+export type AuthType = 'platform' | 'user';
 
 @Component({
   standalone: true,
@@ -22,12 +23,11 @@ export class LoginPage {
 
   public readonly mode = signal<AuthType>('platform');
 
-  public readonly title = computed(() => {
-    const m = this.mode();
-    if (m === 'platform') return 'Login plataforma';
-    if (m === 'user') return 'Login tenant';
-    return 'Login cliente';
-  });
+  public readonly title = computed(() =>
+    this.mode() === 'platform'
+      ? 'Login plataforma'
+      : 'Login tenant'
+  );
 
   public readonly form = this._fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -37,9 +37,9 @@ export class LoginPage {
 
   public constructor() {
     this._route.paramMap.subscribe(params => {
-      const m = (params.get('mode') || 'platform') as AuthType;
+      const m = params.get('mode') as AuthType | null;
 
-      if (m === 'platform' || m === 'user' || m === 'client') {
+      if (m === 'platform' || m === 'user') {
         this.mode.set(m);
       } else {
         this.mode.set('platform');
@@ -47,7 +47,7 @@ export class LoginPage {
 
       const empresaCtrl = this.form.get('empresa_id');
 
-      if (this.mode() !== 'platform') {
+      if (this.mode() === 'user') {
         empresaCtrl?.setValidators([Validators.required]);
       } else {
         empresaCtrl?.clearValidators();
@@ -77,7 +77,7 @@ export class LoginPage {
       password: String(v.password)
     };
 
-    if (m !== 'platform') {
+    if (m === 'user') {
       payload.empresa_id = Number(v.empresa_id);
     }
 
@@ -90,9 +90,11 @@ export class LoginPage {
           return;
         }
 
-        if (m === 'platform') this._router.navigate(['/platform']);
-        else if (m === 'user') this._router.navigate(['/tenant']);
-        else this._router.navigate(['/client']);
+        if (m === 'platform') {
+          this._router.navigate(['/platform']);
+        } else {
+          this._router.navigate(['/tenant']);
+        }
       },
       error: () => {
         this.loading.set(false);

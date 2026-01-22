@@ -12,6 +12,8 @@ export type TenantProduct = {
   stock: number;
   stock_min: number;
   activo: boolean;
+
+  image_url?: string | null;
   primary_image_url?: string | null;
   cantidad_actual?: number | null;
 };
@@ -27,6 +29,7 @@ export type CreateTenantProductRequest = {
   precio?: number | null;
   stock?: number | null;
   stock_min?: number | null;
+  image_url?: string | null;
 };
 
 export type UpdateTenantProductRequest = {
@@ -37,17 +40,14 @@ export type UpdateTenantProductRequest = {
   stock?: number | null;
   stock_min?: number | null;
   activo?: boolean;
+  image_url?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })
 export class TenantProductsApi {
   public constructor(private readonly _api: ApiClientService) {}
 
-  public list(opts?: {
-    q?: string;
-    categoriaId?: number;
-    includeInactivos?: boolean;
-  }): Observable<ListTenantProductsResponse> {
+  public list(opts?: { q?: string; categoriaId?: number; includeInactivos?: boolean }): Observable<ListTenantProductsResponse> {
     const params: string[] = [];
     if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
     if (opts?.categoriaId) params.push(`categoria_id=${encodeURIComponent(String(opts.categoriaId))}`);

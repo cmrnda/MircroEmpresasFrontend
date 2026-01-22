@@ -94,6 +94,16 @@
             />
           </div>
 
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">URL imagen (opcional)</label>
+            <input
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="image_url"
+              placeholder="https://..."
+              type="text"
+            />
+          </div>
+
           <button
             [disabled]="loading() || form.invalid"
             class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -132,8 +142,7 @@
               </select>
 
               <div class="relative w-full sm:w-72">
-                <span
-                  class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
                 <input
                   (input)="filterQ.set(($any($event.target)).value); reload()"
                   [value]="filterQ()"
@@ -176,11 +185,9 @@
 
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
-                  <div
-                    class="h-10 w-10 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
-                    <img *ngIf="p.primary_image_url" [src]="p.primary_image_url" alt="img"
-                         class="h-full w-full object-cover"/>
-                    <span *ngIf="!p.primary_image_url" class="material-symbols-outlined text-slate-400">image</span>
+                  <div class="h-10 w-10 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
+                    <img *ngIf="productImg(p)" [src]="productImg(p)" alt="img" class="h-full w-full object-cover" />
+                    <span *ngIf="!productImg(p)" class="material-symbols-outlined text-slate-400">image</span>
                   </div>
 
                   <div class="min-w-0">
@@ -230,7 +237,6 @@
                     <span class="hidden sm:inline">Imagen</span>
                   </button>
 
-
                   <button
                     (click)="remove(p.producto_id)"
                     *ngIf="p.activo"
@@ -265,9 +271,7 @@
   </div>
 
   <div *ngIf="editOpen()" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-    <div aria-modal="true"
-         class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden"
-         role="dialog">
+    <div class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden" role="dialog" aria-modal="true">
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
         <div class="min-w-0">
           <div class="text-lg font-semibold">Editar producto</div>
@@ -390,6 +394,7 @@
     </div>
   </div>
 </section>
+
 <div *ngIf="imageOpen()" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
   <div class="w-full max-w-lg rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden" role="dialog" aria-modal="true">
     <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
@@ -411,11 +416,11 @@
     <div class="px-5 py-4 space-y-4">
       <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-3">
         <div class="h-14 w-14 rounded-lg bg-white border border-slate-200 overflow-hidden flex items-center justify-center">
-          <img *ngIf="imageForm.value.url" [src]="imageForm.value.url" class="h-full w-full object-cover" alt="img" />
-          <span *ngIf="!imageForm.value.url" class="material-symbols-outlined text-slate-400">image</span>
+          <img *ngIf="imageForm.value.image_url" [src]="imageForm.value.image_url" class="h-full w-full object-cover" alt="img" />
+          <span *ngIf="!imageForm.value.image_url" class="material-symbols-outlined text-slate-400">image</span>
         </div>
         <div class="min-w-0">
-          <div class="text-sm font-medium text-slate-900 truncate">{{ imageForm.value.url || 'Sin imagen' }}</div>
+          <div class="text-sm font-medium text-slate-900 truncate">{{ imageForm.value.image_url || 'Sin imagen' }}</div>
           <div class="text-xs text-slate-500">Preview por URL</div>
         </div>
       </div>
@@ -425,32 +430,10 @@
           <label class="text-sm font-medium text-slate-700">URL</label>
           <input
             class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            formControlName="url"
+            formControlName="image_url"
             type="text"
             placeholder="https://..."
           />
-        </div>
-
-        <div class="space-y-1">
-          <label class="text-sm font-medium text-slate-700">File path</label>
-          <input
-            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            formControlName="file_path"
-            type="text"
-            placeholder="products/123.png"
-          />
-        </div>
-
-        <div class="space-y-1">
-          <label class="text-sm font-medium text-slate-700">Mime type</label>
-          <select
-            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            formControlName="mime_type"
-          >
-            <option value="image/png">image/png</option>
-            <option value="image/jpeg">image/jpeg</option>
-            <option value="image/webp">image/webp</option>
-          </select>
         </div>
 
         <div *ngIf="imageError()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -462,7 +445,7 @@
     <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200">
       <button
         (click)="removeImage()"
-        [disabled]="imageLoading()"
+        [disabled]="loading()"
         class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
         type="button"
       >
@@ -472,7 +455,7 @@
 
       <button
         (click)="saveImage()"
-        [disabled]="imageLoading() || imageForm.invalid"
+        [disabled]="loading() || imageForm.invalid"
         class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
         type="button"
       >

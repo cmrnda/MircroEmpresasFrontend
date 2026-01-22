@@ -47,12 +47,14 @@ export const routes: Routes = [
     children: [
       {path: '', pathMatch: 'full', redirectTo: 'products'},
 
-      {path: 'users', loadComponent: () => import('./pages/tenant/users/tenant-users.page').then(m => m.TenantUsersPage)},
+      {
+        path: 'users',
+        loadComponent: () => import('./pages/tenant/users/tenant-users.page').then(m => m.TenantUsersPage)
+      },
       {
         path: 'clients',
         loadComponent: () => import('./pages/tenant/clients/tenant-clients.page').then(m => m.TenantClientsPage)
       },
-
       {
         path: 'categories',
         loadComponent: () => import('./pages/tenant/categories/tenant-categories.page').then(m => m.TenantCategoriesPage)
@@ -61,7 +63,10 @@ export const routes: Routes = [
         path: 'products',
         loadComponent: () => import('./pages/tenant/products/tenant-products.page').then(m => m.TenantProductsPage)
       },
-      {path: 'orders', loadComponent: () => import('./pages/tenant/orders/tenant-orders.page').then(m => m.TenantOrdersPage)},
+      {
+        path: 'orders',
+        loadComponent: () => import('./pages/tenant/orders/tenant-orders.page').then(m => m.TenantOrdersPage)
+      },
       {
         path: 'orders/:venta_id',
         loadComponent: () => import('./pages/tenant/orders/tenant-order-detail.page').then(m => m.TenantOrderDetailPage)
@@ -70,18 +75,22 @@ export const routes: Routes = [
         path: 'settings',
         loadComponent: () => import('./pages/tenant/settings/tenant-settings.page').then(m => m.TenantSettingsPage)
       },
-      // {
-      //   path: 'subscription',
-      //   loadComponent: () =>
-      //     import('./pages/tenant/subscription/tenant-subscription.page').then(m => m.TenantSubscriptionPage)
-      // },
-      //
-      // {
-      //   path: 'password-resets',
-      //   loadComponent: () => import('./pages/tenant/password-resets/password-resets.page').then(m => m.TenantPasswordResetsPage)
-      // }
+
+      {
+        path: 'suppliers',
+        loadComponent: () => import('./pages/tenant/suppliers/tenant-suppliers.page').then(m => m.TenantSuppliersPage)
+      },
+      {
+        path: 'purchases',
+        loadComponent: () => import('./pages/tenant/purchases/tenant-purchases.page').then(m => m.TenantPurchasesPage)
+      },
+      {
+        path: 'expenses',
+        loadComponent: () => import('./pages/tenant/finance/tenant-expenses.page').then(m => m.TenantExpensesPage)
+      }
     ]
   },
+
 
   {
     path: 'client',

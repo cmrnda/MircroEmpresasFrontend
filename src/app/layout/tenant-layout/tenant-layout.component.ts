@@ -1,3 +1,4 @@
+// src/app/layout/tenant-layout/tenant-layout.component.ts
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -31,6 +32,10 @@ export class TenantLayoutComponent {
     if (url.startsWith('/tenant/clients')) return 'Clientes';
     if (url.startsWith('/tenant/users')) return 'Usuarios';
     if (url.startsWith('/tenant/settings')) return 'Configuraciones';
+
+    if (url.startsWith('/tenant/suppliers')) return 'Proveedores';
+    if (url.startsWith('/tenant/purchases')) return 'Compras';
+    if (url.startsWith('/tenant/expenses')) return 'Gastos';
 
     return 'Resumen tenant';
   });

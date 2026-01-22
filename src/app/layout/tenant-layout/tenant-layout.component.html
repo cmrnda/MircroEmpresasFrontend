@@ -1,3 +1,4 @@
+<!-- src/app/layout/tenant-layout/tenant-layout.component.html -->
 <div class="min-h-dvh bg-slate-50 text-slate-900 flex">
   <aside class="hidden md:flex md:w-64 md:shrink-0 md:flex-col bg-white border-r border-slate-200">
     <div class="px-5 py-4 flex items-center gap-2 font-semibold">
@@ -25,6 +26,7 @@
         <span class="material-symbols-outlined text-base">category</span>
         Categorias
       </a>
+
       <a
         [routerLinkActiveOptions]="{ exact: true }"
         class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
@@ -54,6 +56,42 @@
         <span class="material-symbols-outlined text-base">manage_accounts</span>
         Usuarios
       </a>
+
+      <div class="pt-2">
+        <div class="px-3 pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+          Compras
+        </div>
+
+        <a
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
+          routerLink="/tenant/suppliers"
+          routerLinkActive="bg-slate-100 text-slate-900"
+        >
+          <span class="material-symbols-outlined text-base">local_shipping</span>
+          Proveedores
+        </a>
+
+        <a
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
+          routerLink="/tenant/purchases"
+          routerLinkActive="bg-slate-100 text-slate-900"
+        >
+          <span class="material-symbols-outlined text-base">shopping_cart</span>
+          Compras
+        </a>
+
+        <a
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
+          routerLink="/tenant/expenses"
+          routerLinkActive="bg-slate-100 text-slate-900"
+        >
+          <span class="material-symbols-outlined text-base">account_balance_wallet</span>
+          Gastos
+        </a>
+      </div>
 
       <a
         [routerLinkActiveOptions]="{ exact: true }"
@@ -151,31 +189,31 @@
         <a
           [routerLinkActiveOptions]="{ exact: true }"
           class="px-2 py-3 text-center text-xs text-slate-600 hover:bg-slate-50"
-          routerLink="/tenant/inventory"
+          routerLink="/tenant/suppliers"
           routerLinkActive="text-slate-900"
         >
-          <span class="material-symbols-outlined block text-base">inventory_2</span>
-          Inv
+          <span class="material-symbols-outlined block text-base">local_shipping</span>
+          Prov
         </a>
 
         <a
           [routerLinkActiveOptions]="{ exact: true }"
           class="px-2 py-3 text-center text-xs text-slate-600 hover:bg-slate-50"
-          routerLink="/tenant/orders"
+          routerLink="/tenant/purchases"
           routerLinkActive="text-slate-900"
         >
-          <span class="material-symbols-outlined block text-base">receipt_long</span>
-          Ped
+          <span class="material-symbols-outlined block text-base">shopping_cart</span>
+          Comp
         </a>
 
         <a
           [routerLinkActiveOptions]="{ exact: true }"
           class="px-2 py-3 text-center text-xs text-slate-600 hover:bg-slate-50"
-          routerLink="/tenant/clients"
+          routerLink="/tenant/expenses"
           routerLinkActive="text-slate-900"
         >
-          <span class="material-symbols-outlined block text-base">groups</span>
-          Cli
+          <span class="material-symbols-outlined block text-base">account_balance_wallet</span>
+          Gast
         </a>
       </div>
     </nav>

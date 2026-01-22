@@ -181,8 +181,8 @@
               <td class="px-4 py-3 text-right text-slate-900 font-semibold">{{ money(d.subtotal) }}</td>
             </tr>
 
-            <tr *ngIf="(o.detalle?.length || 0) === 0">
-              <td class="px-4 py-10 text-center text-slate-500" colspan="5">Sin detalle</td>
+            <tr *ngIf="o.detalle.length === 0">
+            <td class="px-4 py-10 text-center text-slate-500" colspan="5">Sin detalle</td>
             </tr>
             </tbody>
           </table>

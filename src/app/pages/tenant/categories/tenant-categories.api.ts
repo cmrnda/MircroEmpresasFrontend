@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { API_BASE } from '../../../core/http/api-base';
 import { Observable } from 'rxjs';
+import { ApiClientService } from '../../../core/http/api-client.service';
 
 export type TenantCategory = {
   categoria_id: number;
@@ -10,28 +9,51 @@ export type TenantCategory = {
   activo: boolean;
 };
 
+export type ListTenantCategoriesResponse = {
+  items: TenantCategory[];
+};
+
+export type CreateTenantCategoryRequest = {
+  nombre: string;
+};
+
+export type UpdateTenantCategoryRequest = {
+  nombre?: string;
+  activo?: boolean;
+};
+
 @Injectable({ providedIn: 'root' })
 export class TenantCategoriesApi {
-  public constructor(private readonly _http: HttpClient) {}
+  public constructor(private readonly _api: ApiClientService) {}
 
-  public list(include_inactivos: boolean): Observable<TenantCategory[]> {
-    const qs = include_inactivos ? '?include_inactivos=true' : '';
-    return this._http.get<TenantCategory[]>(`${API_BASE}/tenant/categories${qs}`);
+  public list(opts?: { q?: string; includeInactivos?: boolean }): Observable<ListTenantCategoriesResponse> {
+    const params: string[] = [];
+    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
+    if (opts?.includeInactivos) params.push('include_inactivos=true');
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this._api.get<ListTenantCategoriesResponse>(`/tenant/categories${qs}`);
   }
 
-  public create(payload: { nombre: string }): Observable<TenantCategory> {
-    return this._http.post<TenantCategory>(`${API_BASE}/tenant/categories`, payload);
+  public get(categoriaId: number, opts?: { includeInactivos?: boolean }): Observable<TenantCategory> {
+    const params: string[] = [];
+    if (opts?.includeInactivos) params.push('include_inactivos=true');
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this._api.get<TenantCategory>(`/tenant/categories/${categoriaId}${qs}`);
   }
 
-  public update(categoria_id: number, payload: { nombre?: string; activo?: boolean }): Observable<TenantCategory | { error: string }> {
-    return this._http.put<TenantCategory | { error: string }>(`${API_BASE}/tenant/categories/${categoria_id}`, payload);
+  public create(payload: CreateTenantCategoryRequest): Observable<TenantCategory> {
+    return this._api.post<TenantCategory>('/tenant/categories', payload);
   }
 
-  public remove(categoria_id: number): Observable<{ ok: boolean } | { error: string }> {
-    return this._http.delete<{ ok: boolean } | { error: string }>(`${API_BASE}/tenant/categories/${categoria_id}`);
+  public update(categoriaId: number, payload: UpdateTenantCategoryRequest): Observable<TenantCategory> {
+    return this._api.put<TenantCategory>(`/tenant/categories/${categoriaId}`, payload);
   }
 
-  public restore(categoria_id: number): Observable<TenantCategory | { error: string }> {
-    return this._http.patch<TenantCategory | { error: string }>(`${API_BASE}/tenant/categories/${categoria_id}/restore`, {});
+  public remove(categoriaId: number): Observable<{ ok: boolean }> {
+    return this._api.delete<{ ok: boolean }>(`/tenant/categories/${categoriaId}`);
+  }
+
+  public restore(categoriaId: number): Observable<TenantCategory> {
+    return this._api.post<TenantCategory>(`/tenant/categories/${categoriaId}/restore`, {});
   }
 }

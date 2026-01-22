@@ -1,0 +1,115 @@
+<section class="space-y-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div class="min-w-0">
+      <div class="text-sm text-slate-500">Tenant</div>
+      <div class="text-2xl font-semibold">Configuracion</div>
+      <div class="text-sm text-slate-500">Moneda, impuesto y branding</div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        (click)="load()"
+        [disabled]="loading() || saving()"
+        class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+        type="button"
+      >
+        <span class="material-symbols-outlined text-base">refresh</span>
+        Recargar
+      </button>
+
+      <button
+        (click)="save()"
+        [disabled]="!canSave()"
+        class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
+        type="button"
+      >
+        <span class="material-symbols-outlined text-base">save</span>
+        Guardar
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+    <div class="lg:col-span-7">
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-lg font-semibold">Preferencias</div>
+            <div class="text-sm text-slate-500">Ajustes generales del tenant</div>
+          </div>
+          <span class="material-symbols-outlined text-slate-400">settings</span>
+        </div>
+
+        <form [formGroup]="form" class="mt-4 space-y-4">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Moneda</label>
+              <select
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="moneda"
+              >
+                <option value="BOB">BOB</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Tasa impuesto</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="tasa_impuesto"
+                type="number"
+                step="0.001"
+                min="0"
+              />
+              <div class="text-xs text-slate-500">Ej: 0.13 para 13%</div>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Logo URL</label>
+            <input
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="logo_url"
+              type="text"
+              placeholder="https://..."
+            />
+          </div>
+
+          <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ error() }}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="lg:col-span-5">
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="text-lg font-semibold">Vista previa</div>
+        <div class="text-sm text-slate-500">Como se vera en el sistema</div>
+
+        <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div class="flex items-center gap-3">
+            <div class="h-12 w-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden">
+              <span class="material-symbols-outlined text-slate-400">image</span>
+            </div>
+
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-900">Moneda: {{ form.value.moneda || 'BOB' }}</div>
+              <div class="text-xs text-slate-500">Impuesto: {{ form.value.tasa_impuesto || '0' }}</div>
+            </div>
+          </div>
+
+          <div class="mt-3 text-xs text-slate-500 break-all">
+            Logo URL: {{ form.value.logo_url || '-' }}
+          </div>
+        </div>
+
+        <div class="mt-4 text-xs text-slate-500">
+          Empresa ID: {{ data()?.empresa_id ?? '-' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

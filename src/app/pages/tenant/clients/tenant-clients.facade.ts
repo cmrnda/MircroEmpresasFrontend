@@ -1,27 +1,27 @@
 import { Injectable, signal } from '@angular/core';
 import { catchError, finalize, of, tap } from 'rxjs';
 import {
-  CreateTenantProductRequest,
-  ListTenantProductsResponse,
-  TenantProduct,
-  TenantProductsApi,
-  UpdateTenantProductRequest
-} from './tenant-products.api';
+  CreateTenantClientRequest,
+  ListTenantClientsResponse,
+  TenantClient,
+  TenantClientsApi,
+  UpdateTenantClientRequest
+} from './tenant-clients.api';
 
 @Injectable({ providedIn: 'root' })
-export class TenantProductsFacade {
+export class TenantClientsFacade {
   public readonly loading = signal(false);
   public readonly error = signal<string | null>(null);
-  public readonly items = signal<TenantProduct[]>([]);
+  public readonly items = signal<TenantClient[]>([]);
 
-  public constructor(private readonly _api: TenantProductsApi) {}
+  public constructor(private readonly _api: TenantClientsApi) {}
 
-  public load(opts?: { q?: string; categoriaId?: number; includeInactivos?: boolean }) {
+  public load(opts?: { q?: string; includeInactivos?: boolean }) {
     this.loading.set(true);
     this.error.set(null);
 
     return this._api.list(opts).pipe(
-      tap((res: ListTenantProductsResponse) => this.items.set(res.items ?? [])),
+      tap((res: ListTenantClientsResponse) => this.items.set(res.items ?? [])),
       catchError(err => {
         this.error.set(err?.error?.error ?? 'load_failed');
         this.items.set([]);
@@ -31,7 +31,7 @@ export class TenantProductsFacade {
     );
   }
 
-  public create(payload: CreateTenantProductRequest) {
+  public create(payload: CreateTenantClientRequest) {
     this.loading.set(true);
     this.error.set(null);
 
@@ -44,11 +44,11 @@ export class TenantProductsFacade {
     );
   }
 
-  public update(productoId: number, payload: UpdateTenantProductRequest) {
+  public update(clienteId: number, payload: UpdateTenantClientRequest) {
     this.loading.set(true);
     this.error.set(null);
 
-    return this._api.update(productoId, payload).pipe(
+    return this._api.update(clienteId, payload).pipe(
       catchError(err => {
         this.error.set(err?.error?.error ?? 'update_failed');
         return of(null);
@@ -57,24 +57,24 @@ export class TenantProductsFacade {
     );
   }
 
-  public remove(productoId: number) {
+  public unlink(clienteId: number) {
     this.loading.set(true);
     this.error.set(null);
 
-    return this._api.remove(productoId).pipe(
+    return this._api.unlink(clienteId).pipe(
       catchError(err => {
-        this.error.set(err?.error?.error ?? 'remove_failed');
+        this.error.set(err?.error?.error ?? 'unlink_failed');
         return of(null);
       }),
       finalize(() => this.loading.set(false))
     );
   }
 
-  public restore(productoId: number) {
+  public restoreLink(clienteId: number) {
     this.loading.set(true);
     this.error.set(null);
 
-    return this._api.restore(productoId).pipe(
+    return this._api.restoreLink(clienteId).pipe(
       catchError(err => {
         this.error.set(err?.error?.error ?? 'restore_failed');
         return of(null);

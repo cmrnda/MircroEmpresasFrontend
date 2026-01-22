@@ -1,65 +1,92 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { API_BASE } from '../../../core/http/api-base';
 import { Observable } from 'rxjs';
+import { ApiClientService } from '../../../core/http/api-client.service';
 
-export type TenantOrderItem = {
+export type TenantOrder = {
   venta_id: number;
+  empresa_id: number;
   cliente_id: number;
-  fecha_hora: string | null;
-  total: number;
-  estado: string;
-};
 
-export type TenantOrdersList = {
-  items: TenantOrderItem[];
-  page: number;
-  page_size: number;
+  fecha_hora: string;
   total: number;
+  descuento_total: number;
+  estado: string;
+
+  pago_metodo?: string | null;
+  pago_monto?: number | null;
+  pago_referencia_qr?: string | null;
+  pago_estado?: string | null;
+  pagado_en?: string | null;
+
+  envio_departamento?: string | null;
+  envio_ciudad?: string | null;
+  envio_zona_barrio?: string | null;
+  envio_direccion_linea?: string | null;
+  envio_referencia?: string | null;
+  envio_telefono_receptor?: string | null;
+  envio_costo?: number | null;
+  envio_estado?: string | null;
+  envio_tracking?: string | null;
+  envio_fecha_despacho?: string | null;
+  envio_fecha_entrega?: string | null;
+
+  confirmado_por_usuario_id?: number | null;
+  confirmado_en?: string | null;
 };
 
 export type TenantOrderDetail = {
-  venta: TenantOrderItem;
-  detalles: Array<{
-    venta_detalle_id: number;
-    producto_id: number;
-    cantidad: number;
-    precio_unit: number;
-    subtotal: number;
-  }>;
-  envio: null | {
-    envio_id: number;
-    departamento: string;
-    ciudad: string;
-    direccion_linea: string;
-    estado_envio: string;
-    tracking: string | null;
-    fecha_despacho: string | null;
-    fecha_entrega: string | null;
-  };
+  venta_detalle_id: number;
+  empresa_id: number;
+  venta_id: number;
+  producto_id: number;
+  cantidad: number;
+  precio_unit: number;
+  descuento: number;
+  subtotal: number;
+};
+
+export type TenantOrderFull = TenantOrder & {
+  detalle: TenantOrderDetail[];
+};
+
+export type ListTenantOrdersResponse = {
+  items: TenantOrder[];
+};
+
+export type ShipOrderRequest = {
+  envio_departamento?: string | null;
+  envio_ciudad?: string | null;
+  envio_zona_barrio?: string | null;
+  envio_direccion_linea?: string | null;
+  envio_referencia?: string | null;
+  envio_telefono_receptor?: string | null;
+  envio_costo?: number | null;
+  envio_tracking?: string | null;
+  envio_estado?: string | null;
+  envio_fecha_despacho?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })
 export class TenantOrdersApi {
-  public constructor(private readonly _http: HttpClient) {}
+  public constructor(private readonly _api: ApiClientService) {}
 
-  public list(params: { estado?: string | null; page: number; page_size: number }): Observable<TenantOrdersList> {
-    const qs: string[] = [];
-    if (params.estado) qs.push(`estado=${encodeURIComponent(String(params.estado))}`);
-    qs.push(`page=${encodeURIComponent(String(params.page))}`);
-    qs.push(`page_size=${encodeURIComponent(String(params.page_size))}`);
-    return this._http.get<TenantOrdersList>(`${API_BASE}/tenant/orders?${qs.join('&')}`);
+  public list(opts?: { estado?: string; clienteId?: number }): Observable<ListTenantOrdersResponse> {
+    const params: string[] = [];
+    if (opts?.estado) params.push(`estado=${encodeURIComponent(opts.estado)}`);
+    if (opts?.clienteId) params.push(`cliente_id=${encodeURIComponent(String(opts.clienteId))}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this._api.get<ListTenantOrdersResponse>(`/tenant/orders${qs}`);
   }
 
-  public get(venta_id: number): Observable<TenantOrderDetail> {
-    return this._http.get<TenantOrderDetail>(`${API_BASE}/tenant/orders/${venta_id}`);
+  public get(ventaId: number): Observable<TenantOrderFull> {
+    return this._api.get<TenantOrderFull>(`/tenant/orders/${ventaId}`);
   }
 
-  public ship(venta_id: number, tracking?: string | null): Observable<any> {
-    return this._http.patch<any>(`${API_BASE}/tenant/orders/${venta_id}/ship`, { tracking: tracking || null });
+  public ship(ventaId: number, payload: ShipOrderRequest): Observable<TenantOrderFull> {
+    return this._api.post<TenantOrderFull>(`/tenant/orders/${ventaId}/ship`, payload);
   }
 
-  public complete(venta_id: number): Observable<any> {
-    return this._http.patch<any>(`${API_BASE}/tenant/orders/${venta_id}/complete`, {});
+  public complete(ventaId: number): Observable<TenantOrderFull> {
+    return this._api.post<TenantOrderFull>(`/tenant/orders/${ventaId}/complete`, {});
   }
 }

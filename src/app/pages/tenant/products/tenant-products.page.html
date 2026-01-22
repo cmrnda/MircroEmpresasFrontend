@@ -1,0 +1,484 @@
+<section class="space-y-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div class="min-w-0">
+      <div class="text-sm text-slate-500">Tenant</div>
+      <div class="text-2xl font-semibold">Productos</div>
+      <div class="text-sm text-slate-500">Gestiona tu catalogo por categoria</div>
+    </div>
+
+    <button
+      (click)="reload()"
+      [disabled]="loading()"
+      class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+      type="button"
+    >
+      <span class="material-symbols-outlined text-base">refresh</span>
+      Recargar
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+    <div class="lg:col-span-4 lg:sticky lg:top-24 self-start">
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-lg font-semibold">Nuevo producto</div>
+            <div class="text-sm text-slate-500">Crea un producto en una categoria</div>
+          </div>
+          <span class="material-symbols-outlined text-slate-400">inventory_2</span>
+        </div>
+
+        <form (ngSubmit)="create()" [formGroup]="form" class="mt-4 space-y-3">
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Categoria</label>
+            <select
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="categoria_id"
+            >
+              <option [ngValue]="null">Seleccionar</option>
+              <option *ngFor="let c of categories()" [ngValue]="c.categoria_id">
+                {{ c.categoria_id }} - {{ c.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Codigo</label>
+            <input
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="codigo"
+              placeholder="Ej: P-001"
+              type="text"
+            />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Descripcion</label>
+            <input
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="descripcion"
+              placeholder="Ej: Coca cola 500ml"
+              type="text"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Precio</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="precio"
+                step="0.01"
+                type="number"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Stock minimo</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="stock_min"
+                step="1"
+                type="number"
+              />
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Stock</label>
+            <input
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="stock"
+              step="0.001"
+              type="number"
+            />
+          </div>
+
+          <button
+            [disabled]="loading() || form.invalid"
+            class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
+            type="submit"
+          >
+            <span class="material-symbols-outlined text-base">add</span>
+            Crear
+          </button>
+
+          <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ error() }}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="lg:col-span-8 min-w-0">
+      <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div class="px-4 py-4 border-b border-slate-200">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div class="text-lg font-semibold">Listado</div>
+              <div class="text-sm text-slate-500">Filtra por categoria o texto</div>
+            </div>
+
+            <div class="w-full sm:w-auto grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
+              <select
+                (ngModelChange)="filterCategoriaId.set($event); reload()"
+                [ngModel]="filterCategoriaId()"
+                class="w-full sm:w-56 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              >
+                <option [ngValue]="null">Todas las categorias</option>
+                <option *ngFor="let c of categories()" [ngValue]="c.categoria_id">
+                  {{ c.categoria_id }} - {{ c.nombre }}
+                </option>
+              </select>
+
+              <div class="relative w-full sm:w-72">
+                <span
+                  class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+                <input
+                  (input)="filterQ.set(($any($event.target)).value); reload()"
+                  [value]="filterQ()"
+                  class="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  placeholder="Buscar por codigo o descripcion"
+                  type="text"
+                />
+              </div>
+
+              <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+                <input
+                  (change)="includeInactivos.set(($any($event.target)).checked); reload()"
+                  [checked]="includeInactivos()"
+                  class="h-4 w-4 rounded border-slate-300"
+                  type="checkbox"
+                />
+                Ver inactivos
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm min-w-[920px]">
+            <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="px-4 py-3 text-left hidden sm:table-cell">ID</th>
+              <th class="px-4 py-3 text-left">Producto</th>
+              <th class="px-4 py-3 text-left hidden sm:table-cell">Categoria</th>
+              <th class="px-4 py-3 text-left">Precio</th>
+              <th class="px-4 py-3 text-left">Stock</th>
+              <th class="px-4 py-3 text-left">Estado</th>
+              <th class="px-4 py-3 text-right">Acciones</th>
+            </tr>
+            </thead>
+
+            <tbody class="divide-y">
+            <tr *ngFor="let p of filtered()" class="hover:bg-slate-50">
+              <td class="px-4 py-3 hidden sm:table-cell text-slate-700">{{ p.producto_id }}</td>
+
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="h-10 w-10 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
+                    <img *ngIf="p.primary_image_url" [src]="p.primary_image_url" alt="img"
+                         class="h-full w-full object-cover"/>
+                    <span *ngIf="!p.primary_image_url" class="material-symbols-outlined text-slate-400">image</span>
+                  </div>
+
+                  <div class="min-w-0">
+                    <div class="font-medium text-slate-900 truncate">{{ p.descripcion }}</div>
+                    <div class="text-xs text-slate-500">
+                      Codigo: {{ p.codigo }}
+                      <span class="sm:hidden"> · ID: {{ p.producto_id }}</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <td class="px-4 py-3 hidden sm:table-cell text-slate-700">
+                {{ catName(p.categoria_id) }}
+              </td>
+
+              <td class="px-4 py-3 text-slate-700">{{ p.precio }}</td>
+
+              <td class="px-4 py-3">
+                <div class="text-slate-700">{{ p.stock }}</div>
+                <div class="text-xs text-slate-500">Min: {{ p.stock_min }}</div>
+              </td>
+
+              <td class="px-4 py-3">
+                  <span [ngClass]="badgeClass(p.activo)" class="rounded-full px-2 py-1 text-xs font-medium">
+                    {{ p.activo ? 'ACTIVO' : 'INACTIVO' }}
+                  </span>
+              </td>
+
+              <td class="px-4 py-3 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    (click)="openEdit(p)"
+                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+                    type="button"
+                  >
+                    <span class="material-symbols-outlined text-base">edit</span>
+                    <span class="hidden sm:inline">Editar</span>
+                  </button>
+
+                  <button
+                    (click)="openImage(p)"
+                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+                    type="button"
+                  >
+                    <span class="material-symbols-outlined text-base">image</span>
+                    <span class="hidden sm:inline">Imagen</span>
+                  </button>
+
+
+                  <button
+                    (click)="remove(p.producto_id)"
+                    *ngIf="p.activo"
+                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+                    type="button"
+                  >
+                    <span class="material-symbols-outlined text-base">delete</span>
+                    <span class="hidden sm:inline">Eliminar</span>
+                  </button>
+
+                  <button
+                    (click)="restore(p.producto_id)"
+                    *ngIf="!p.activo"
+                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+                    type="button"
+                  >
+                    <span class="material-symbols-outlined text-base">restore</span>
+                    <span class="hidden sm:inline">Restaurar</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <tr *ngIf="filtered().length === 0">
+              <td class="px-4 py-10 text-center text-slate-500" colspan="7">Sin resultados</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="editOpen()" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+    <div aria-modal="true"
+         class="w-full max-w-xl rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden"
+         role="dialog">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <div class="min-w-0">
+          <div class="text-lg font-semibold">Editar producto</div>
+          <div class="text-sm text-slate-500">Actualiza datos del producto</div>
+        </div>
+
+        <button
+          (click)="closeEdit()"
+          aria-label="Cerrar"
+          class="rounded-lg border border-slate-200 bg-white p-2 hover:bg-slate-50"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+      </div>
+
+      <div class="px-5 py-4 max-h-[calc(100dvh-12rem)] overflow-y-auto">
+        <form [formGroup]="editForm" class="space-y-3">
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Categoria</label>
+            <select
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="categoria_id"
+            >
+              <option *ngFor="let c of categories()" [ngValue]="c.categoria_id">
+                {{ c.categoria_id }} - {{ c.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Codigo</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="codigo"
+                type="text"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Activo</label>
+              <select
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="activo"
+              >
+                <option [ngValue]="true">ACTIVO</option>
+                <option [ngValue]="false">INACTIVO</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Descripcion</label>
+            <input
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="descripcion"
+              type="text"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Precio</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="precio"
+                step="0.01"
+                type="number"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Stock</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="stock"
+                step="0.001"
+                type="number"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-sm font-medium text-slate-700">Stock minimo</label>
+              <input
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                formControlName="stock_min"
+                step="1"
+                type="number"
+              />
+            </div>
+          </div>
+
+          <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ error() }}
+          </div>
+        </form>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200">
+        <button
+          (click)="closeEdit()"
+          class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-base">close</span>
+          Cancelar
+        </button>
+
+        <button
+          (click)="saveEdit()"
+          [disabled]="loading() || editForm.invalid"
+          class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-base">save</span>
+          Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+<div *ngIf="imageOpen()" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+  <div class="w-full max-w-lg rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+      <div class="min-w-0">
+        <div class="text-lg font-semibold">Imagen del producto</div>
+        <div class="text-sm text-slate-500">Producto #{{ imageProductoId() }}</div>
+      </div>
+
+      <button
+        (click)="closeImage()"
+        class="rounded-lg border border-slate-200 bg-white p-2 hover:bg-slate-50"
+        type="button"
+        aria-label="Cerrar"
+      >
+        <span class="material-symbols-outlined text-base">close</span>
+      </button>
+    </div>
+
+    <div class="px-5 py-4 space-y-4">
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 flex items-center gap-3">
+        <div class="h-14 w-14 rounded-lg bg-white border border-slate-200 overflow-hidden flex items-center justify-center">
+          <img *ngIf="imageForm.value.url" [src]="imageForm.value.url" class="h-full w-full object-cover" alt="img" />
+          <span *ngIf="!imageForm.value.url" class="material-symbols-outlined text-slate-400">image</span>
+        </div>
+        <div class="min-w-0">
+          <div class="text-sm font-medium text-slate-900 truncate">{{ imageForm.value.url || 'Sin imagen' }}</div>
+          <div class="text-xs text-slate-500">Preview por URL</div>
+        </div>
+      </div>
+
+      <form [formGroup]="imageForm" class="space-y-3">
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-slate-700">URL</label>
+          <input
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            formControlName="url"
+            type="text"
+            placeholder="https://..."
+          />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-slate-700">File path</label>
+          <input
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            formControlName="file_path"
+            type="text"
+            placeholder="products/123.png"
+          />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-slate-700">Mime type</label>
+          <select
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            formControlName="mime_type"
+          >
+            <option value="image/png">image/png</option>
+            <option value="image/jpeg">image/jpeg</option>
+            <option value="image/webp">image/webp</option>
+          </select>
+        </div>
+
+        <div *ngIf="imageError()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ imageError() }}
+        </div>
+      </form>
+    </div>
+
+    <div class="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200">
+      <button
+        (click)="removeImage()"
+        [disabled]="imageLoading()"
+        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+        type="button"
+      >
+        <span class="material-symbols-outlined text-base">delete</span>
+        Quitar
+      </button>
+
+      <button
+        (click)="saveImage()"
+        [disabled]="imageLoading() || imageForm.invalid"
+        class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
+        type="button"
+      >
+        <span class="material-symbols-outlined text-base">save</span>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>

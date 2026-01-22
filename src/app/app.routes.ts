@@ -47,28 +47,28 @@ export const routes: Routes = [
     children: [
       {path: '', pathMatch: 'full', redirectTo: 'products'},
 
-      {path: 'users', loadComponent: () => import('./pages/tenant/users/users.page').then(m => m.UsersPage)},
+      {path: 'users', loadComponent: () => import('./pages/tenant/users/tenant-users.page').then(m => m.TenantUsersPage)},
       {
         path: 'clients',
-        loadComponent: () => import('./pages/tenant/clients/clients.page').then(m => m.TenantClientsPage)
+        loadComponent: () => import('./pages/tenant/clients/tenant-clients.page').then(m => m.TenantClientsPage)
       },
 
       {
         path: 'categories',
-        loadComponent: () => import('./pages/tenant/categories/categories.page').then(m => m.TenantCategoriesPage)
+        loadComponent: () => import('./pages/tenant/categories/tenant-categories.page').then(m => m.TenantCategoriesPage)
       },
       {
         path: 'products',
-        loadComponent: () => import('./pages/tenant/products/products.page').then(m => m.TenantProductsPage)
+        loadComponent: () => import('./pages/tenant/products/tenant-products.page').then(m => m.TenantProductsPage)
       },
-      {
-        path: 'inventory',
-        loadComponent: () => import('./pages/tenant/inventory/inventory.page').then(m => m.TenantInventoryPage)
-      },
-      {path: 'orders', loadComponent: () => import('./pages/tenant/orders/orders.page').then(m => m.TenantOrdersPage)},
+      {path: 'orders', loadComponent: () => import('./pages/tenant/orders/tenant-orders.page').then(m => m.TenantOrdersPage)},
       {
         path: 'orders/:venta_id',
-        loadComponent: () => import('./pages/tenant/orders/order-detail.page').then(m => m.TenantOrderDetailPage)
+        loadComponent: () => import('./pages/tenant/orders/tenant-order-detail.page').then(m => m.TenantOrderDetailPage)
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./pages/tenant/settings/tenant-settings.page').then(m => m.TenantSettingsPage)
       },
       // {
       //   path: 'subscription',

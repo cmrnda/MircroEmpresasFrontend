@@ -1,95 +1,85 @@
-import {inject, Injectable, signal} from '@angular/core';
-import {TenantCategoriesApi, TenantCategory} from './tenant-categories.api';
+import { Injectable, signal } from '@angular/core';
+import { catchError, finalize, of, tap } from 'rxjs';
+import {
+  CreateTenantCategoryRequest,
+  ListTenantCategoriesResponse,
+  TenantCategoriesApi,
+  TenantCategory,
+  UpdateTenantCategoryRequest
+} from './tenant-categories.api';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class TenantCategoriesFacade {
-  private readonly _api = inject(TenantCategoriesApi);
-
-  public readonly items = signal<TenantCategory[]>([]);
   public readonly loading = signal(false);
   public readonly error = signal<string | null>(null);
-  public readonly includeInactivos = signal(false);
+  public readonly items = signal<TenantCategory[]>([]);
 
-  public load(): void {
+  public constructor(private readonly _api: TenantCategoriesApi) {}
+
+  public load(opts?: { q?: string; includeInactivos?: boolean }) {
     this.loading.set(true);
     this.error.set(null);
 
-    this._api.list(this.includeInactivos()).subscribe({
-      next: (res) => {
-        this.items.set(res || []);
-        this.loading.set(false);
-      },
-      error: (e: any) => {
-        this.error.set(e?.error?.error ?? 'load_failed');
-        this.loading.set(false);
-      }
-    });
+    return this._api.list(opts).pipe(
+      tap((res: ListTenantCategoriesResponse) => this.items.set(res.items ?? [])),
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'load_failed');
+        this.items.set([]);
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
   }
 
-  public toggleIncludeInactivos(): void {
-    this.includeInactivos.set(!this.includeInactivos());
-    this.load();
-  }
-
-  public create(nombre: string): void {
-    const n = (nombre || '').trim();
-    if (!n) return;
-
+  public create(payload: CreateTenantCategoryRequest) {
     this.loading.set(true);
     this.error.set(null);
 
-    this._api.create({nombre: n}).subscribe({
-      next: () => this.load(),
-      error: (e: any) => {
-        this.error.set(e?.error?.error ?? 'create_failed');
-        this.loading.set(false);
-      }
-    });
+    return this._api.create(payload).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'create_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
   }
 
-  public update(categoria_id: number, payload: { nombre?: string; activo?: boolean }): void {
+  public update(categoriaId: number, payload: UpdateTenantCategoryRequest) {
     this.loading.set(true);
     this.error.set(null);
 
-    this._api.update(categoria_id, payload).subscribe({
-      next: (res: any) => {
-        if (res?.error) {
-          this.error.set(res.error);
-          this.loading.set(false);
-          return;
-        }
-        this.load();
-      },
-      error: (e: any) => {
-        this.error.set(e?.error?.error ?? 'update_failed');
-        this.loading.set(false);
-      }
-    });
+    return this._api.update(categoriaId, payload).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'update_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
   }
 
-  public remove(categoria_id: number): void {
+  public remove(categoriaId: number) {
     this.loading.set(true);
     this.error.set(null);
 
-    this._api.remove(categoria_id).subscribe({
-      next: () => this.load(),
-      error: (e: any) => {
-        this.error.set(e?.error?.error ?? 'delete_failed');
-        this.loading.set(false);
-      }
-    });
+    return this._api.remove(categoriaId).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'remove_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
   }
 
-  public restore(categoria_id: number): void {
+  public restore(categoriaId: number) {
     this.loading.set(true);
     this.error.set(null);
 
-    this._api.restore(categoria_id).subscribe({
-      next: () => this.load(),
-      error: (e: any) => {
-        this.error.set(e?.error?.error ?? 'restore_failed');
-        this.loading.set(false);
-      }
-    });
+    return this._api.restore(categoriaId).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'restore_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
   }
 }

@@ -1,7 +1,6 @@
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-import {API_BASE} from '../../../core/http/api-base';
-import {Observable} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { ApiClientService } from '../../../core/http/api-client.service';
 
 export type TenantProduct = {
   producto_id: number;
@@ -10,77 +9,73 @@ export type TenantProduct = {
   codigo: string;
   descripcion: string;
   precio: number;
+  stock: number;
   stock_min: number;
   activo: boolean;
+  primary_image_url?: string | null;
+  cantidad_actual?: number | null;
 };
 
-export type TenantProductImage = {
-  image_id: number;
-  url: string;
-  mime_type: string;
-  file_size: number;
-  is_primary: boolean;
-  created_at: string | null;
+export type ListTenantProductsResponse = {
+  items: TenantProduct[];
 };
 
-@Injectable({providedIn: 'root'})
+export type CreateTenantProductRequest = {
+  categoria_id: number;
+  codigo: string;
+  descripcion: string;
+  precio?: number | null;
+  stock?: number | null;
+  stock_min?: number | null;
+};
+
+export type UpdateTenantProductRequest = {
+  categoria_id?: number;
+  codigo?: string;
+  descripcion?: string;
+  precio?: number | null;
+  stock?: number | null;
+  stock_min?: number | null;
+  activo?: boolean;
+};
+
+@Injectable({ providedIn: 'root' })
 export class TenantProductsApi {
-  public constructor(private readonly _http: HttpClient) {
+  public constructor(private readonly _api: ApiClientService) {}
+
+  public list(opts?: {
+    q?: string;
+    categoriaId?: number;
+    includeInactivos?: boolean;
+  }): Observable<ListTenantProductsResponse> {
+    const params: string[] = [];
+    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
+    if (opts?.categoriaId) params.push(`categoria_id=${encodeURIComponent(String(opts.categoriaId))}`);
+    if (opts?.includeInactivos) params.push('include_inactivos=true');
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this._api.get<ListTenantProductsResponse>(`/tenant/products${qs}`);
   }
 
-  public list(params: {
-    include_inactivos: boolean;
-    categoria_id?: number | null;
-    q?: string | null
-  }): Observable<TenantProduct[]> {
-    const qs: string[] = [];
-    if (params.include_inactivos) qs.push('include_inactivos=true');
-    if (params.categoria_id != null) qs.push(`categoria_id=${encodeURIComponent(String(params.categoria_id))}`);
-    if (params.q) qs.push(`q=${encodeURIComponent(String(params.q))}`);
-    const qstr = qs.length ? `?${qs.join('&')}` : '';
-    return this._http.get<TenantProduct[]>(`${API_BASE}/tenant/products${qstr}`);
+  public get(productoId: number, opts?: { includeInactivos?: boolean }): Observable<TenantProduct> {
+    const params: string[] = [];
+    if (opts?.includeInactivos) params.push('include_inactivos=true');
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this._api.get<TenantProduct>(`/tenant/products/${productoId}${qs}`);
   }
 
-  public create(payload: {
-    categoria_id: number;
-    codigo: string;
-    descripcion: string;
-    precio: number;
-    stock_min?: number
-  }): Observable<TenantProduct> {
-    return this._http.post<TenantProduct>(`${API_BASE}/tenant/products`, payload);
+  public create(payload: CreateTenantProductRequest): Observable<TenantProduct> {
+    return this._api.post<TenantProduct>('/tenant/products', payload);
   }
 
-  public update(producto_id: number, payload: Partial<TenantProduct>): Observable<TenantProduct | { error: string }> {
-    return this._http.put<TenantProduct | { error: string }>(`${API_BASE}/tenant/products/${producto_id}`, payload);
+  public update(productoId: number, payload: UpdateTenantProductRequest): Observable<TenantProduct> {
+    return this._api.put<TenantProduct>(`/tenant/products/${productoId}`, payload);
   }
 
-  public remove(producto_id: number): Observable<{ ok: boolean } | { error: string }> {
-    return this._http.delete<{ ok: boolean } | { error: string }>(`${API_BASE}/tenant/products/${producto_id}`);
+  public remove(productoId: number): Observable<{ ok: boolean }> {
+    return this._api.delete<{ ok: boolean }>(`/tenant/products/${productoId}`);
   }
 
-  public restore(producto_id: number): Observable<TenantProduct | { error: string }> {
-    return this._http.patch<TenantProduct | {
-      error: string
-    }>(`${API_BASE}/tenant/products/${producto_id}/restore`, {});
-  }
-
-  public listImages(producto_id: number): Observable<TenantProductImage[]> {
-    return this._http.get<TenantProductImage[]>(`${API_BASE}/tenant/products/${producto_id}/images`);
-  }
-
-  public uploadImage(producto_id: number, file: File, is_primary: boolean): Observable<TenantProductImage> {
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('is_primary', is_primary ? 'true' : 'false');
-    return this._http.post<TenantProductImage>(`${API_BASE}/tenant/products/${producto_id}/images`, fd);
-  }
-
-  public setPrimary(producto_id: number, image_id: number): Observable<TenantProductImage> {
-    return this._http.patch<TenantProductImage>(`${API_BASE}/tenant/products/${producto_id}/images/${image_id}/primary`, {});
-  }
-
-  public deleteImage(producto_id: number, image_id: number): Observable<{ ok: boolean }> {
-    return this._http.delete<{ ok: boolean }>(`${API_BASE}/tenant/products/${producto_id}/images/${image_id}`);
+  public restore(productoId: number): Observable<TenantProduct> {
+    return this._api.post<TenantProduct>(`/tenant/products/${productoId}/restore`, {});
   }
 }

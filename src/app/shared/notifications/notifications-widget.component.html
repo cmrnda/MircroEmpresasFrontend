@@ -1,0 +1,84 @@
+<div class="relative" *ngIf="enabled()">
+  <button
+    type="button"
+    (click)="toggle()"
+    aria-label="Notifications"
+    class="relative inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+  >
+    <span class="material-symbols-outlined text-base">notifications</span>
+
+    <span
+      *ngIf="unread() > 0"
+      class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] leading-5 text-center"
+    >
+      {{ unread() > 99 ? '99+' : unread() }}
+    </span>
+  </button>
+
+  <div
+    *ngIf="open()"
+    class="absolute right-0 mt-2 w-[22rem] max-w-[90vw] rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden"
+    role="menu"
+  >
+    <div class="px-4 py-3 border-b border-slate-200 flex items-center gap-2">
+      <div class="font-semibold text-sm">Notificaciones</div>
+
+      <div class="ml-auto flex items-center gap-2">
+        <div class="text-xs text-slate-500" *ngIf="loading()">Loading...</div>
+
+        <button
+          type="button"
+          (click)="refreshAll()"
+          class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs hover:bg-slate-50"
+        >
+          <span class="material-symbols-outlined text-[16px]">refresh</span>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <div class="max-h-[22rem] overflow-y-auto">
+      <div *ngIf="items().length === 0" class="px-4 py-10 text-center text-sm text-slate-500">
+        No notifications
+      </div>
+
+      <button
+        *ngFor="let n of items(); trackBy: trackById"
+        type="button"
+        (click)="markRead(n)"
+        class="w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50"
+      >
+        <div class="flex items-start gap-2">
+          <span
+            class="mt-1 inline-block h-2 w-2 rounded-full"
+            [class.bg-rose-600]="!n.leido_en"
+            [class.bg-slate-300]="!!n.leido_en"
+          ></span>
+
+          <div class="min-w-0 flex-1">
+            <div class="text-sm font-semibold truncate">{{ n.titulo }}</div>
+            <div class="text-xs text-slate-600 mt-0.5 sp-clamp-2">{{ n.cuerpo }}</div>
+            <div class="text-[11px] text-slate-400 mt-1">{{ formatDate(n.creado_en) }}</div>
+          </div>
+
+          <span *ngIf="!n.leido_en" class="text-[10px] text-rose-600 font-semibold">New</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="px-4 py-3 bg-slate-50 flex items-center gap-2">
+      <button
+        type="button"
+        (click)="toggleUnreadOnly()"
+        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+      >
+        <span class="material-symbols-outlined text-[16px]">filter_alt</span>
+        {{ unreadOnly() ? 'Unread only' : 'All' }}
+      </button>
+
+      <div class="ml-auto text-xs text-slate-500">
+        {{ unread() }} unread
+      </div>
+    </div>
+  </div>
+</div>

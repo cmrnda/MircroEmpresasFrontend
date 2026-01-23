@@ -1,4 +1,3 @@
-<!-- src/app/layout/tenant-layout/tenant-layout.component.html -->
 <div class="min-h-dvh bg-slate-50 text-slate-900 flex">
   <aside class="hidden md:flex md:w-64 md:shrink-0 md:flex-col bg-white border-r border-slate-200">
     <div class="px-5 py-4 flex items-center gap-2 font-semibold">
@@ -70,6 +69,15 @@
         >
           <span class="material-symbols-outlined text-base">local_shipping</span>
           Proveedores
+        </a>
+        <a
+          class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition"
+          routerLink="/tenant/pos"
+          routerLinkActive="bg-slate-100 text-slate-900"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <span class="material-symbols-outlined text-base">point_of_sale</span>
+          POS
         </a>
 
         <a
@@ -154,6 +162,18 @@
         <div class="flex-1 min-w-0">
           <div class="text-sm text-slate-500">Tenant</div>
           <div class="text-lg font-semibold truncate">{{ headerTitle() }}</div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <app-notifications-widget></app-notifications-widget>
+
+          <button
+            (click)="logout()"
+            class="md:hidden inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+            type="button"
+          >
+            <span class="material-symbols-outlined text-base">logout</span>
+          </button>
         </div>
       </div>
     </header>

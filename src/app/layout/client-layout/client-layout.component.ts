@@ -1,16 +1,34 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterModule, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { AuthFacade } from '../../core/auth/auth.facade';
 import { AuthStateService } from '../../core/auth/auth-state.service';
 import { CartService } from '../../pages/client/cart/cart.service';
 import { API_BASE } from '../../core/http/api-base';
 
 type AuthMode = 'login' | 'signup';
+
+type CheckoutForm = {
+  envio_departamento: string;
+  envio_ciudad: string;
+  envio_zona_barrio: string;
+  envio_direccion_linea: string;
+  envio_referencia: string;
+  envio_telefono_receptor: string;
+  envio_costo: number;
+  descuento_total: number;
+};
+
+type ShipErrKey =
+  | 'envio_departamento'
+  | 'envio_ciudad'
+  | 'envio_zona_barrio'
+  | 'envio_direccion_linea'
+  | 'envio_telefono_receptor';
 
 @Component({
   standalone: true,
@@ -41,6 +59,7 @@ export class ClientLayoutComponent {
   public readonly placing = signal(false);
   public readonly placeError = signal<string | null>(null);
   public readonly placeOk = signal(false);
+  public readonly placeVentaId = signal<number | null>(null);
 
   public readonly authMode = signal<AuthMode>('login');
   public readonly authLoading = signal(false);
@@ -51,9 +70,8 @@ export class ClientLayoutComponent {
 
   public readonly headerTitle = computed(() => {
     const u = this._url();
-    if (u.includes('/shop')) return 'Shop';
-    if (u.includes('/cart')) return 'Cart';
-    return 'Client';
+    if (u.includes('/shop')) return 'Tienda';
+    return 'Cliente';
   });
 
   public readonly loginForm = this._fb.group({
@@ -69,6 +87,43 @@ export class ClientLayoutComponent {
     telefono: ['']
   });
 
+  public readonly checkoutForm = signal<CheckoutForm>({
+    envio_departamento: '',
+    envio_ciudad: '',
+    envio_zona_barrio: '',
+    envio_direccion_linea: '',
+    envio_referencia: '',
+    envio_telefono_receptor: '',
+    envio_costo: 0,
+    descuento_total: 0
+  });
+
+  public readonly shipErrors = computed<ShipErrKey[]>(() => {
+    const f = this.checkoutForm();
+    const errs: ShipErrKey[] = [];
+
+    if (!cleanStr(f.envio_departamento)) errs.push('envio_departamento');
+    if (!cleanStr(f.envio_ciudad)) errs.push('envio_ciudad');
+    if (!cleanStr(f.envio_zona_barrio)) errs.push('envio_zona_barrio');
+    if (!cleanStr(f.envio_direccion_linea)) errs.push('envio_direccion_linea');
+    if (!isPhoneOk(f.envio_telefono_receptor)) errs.push('envio_telefono_receptor');
+
+    return errs;
+  });
+
+  public readonly shippingReady = computed(() => this.shipErrors().length === 0);
+
+  public readonly shippingSummary = computed(() => {
+    const f = this.checkoutForm();
+    const dep = cleanStr(f.envio_departamento);
+    const ciu = cleanStr(f.envio_ciudad);
+    const zon = cleanStr(f.envio_zona_barrio);
+    const dir = cleanStr(f.envio_direccion_linea);
+
+    const parts = [dep, ciu, zon, dir].filter(Boolean) as string[];
+    return parts.length ? parts.join(' - ') : 'Completa tus datos de envio';
+  });
+
   public constructor() {
     this._route.paramMap.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((pm) => {
       const n = Number(pm.get('empresa_id'));
@@ -76,6 +131,10 @@ export class ClientLayoutComponent {
 
       this._state.empresaId.set(empresa_id);
       this.cart.setEmpresaId(empresa_id);
+
+      this.placeError.set(null);
+      this.placeOk.set(false);
+      this.placeVentaId.set(null);
 
       if (!empresa_id) {
         this.cartOpen.set(false);
@@ -106,6 +165,7 @@ export class ClientLayoutComponent {
     this.cartOpen.set(true);
     this.placeError.set(null);
     this.placeOk.set(false);
+    this.placeVentaId.set(null);
   }
 
   public closeCart(): void {
@@ -115,14 +175,42 @@ export class ClientLayoutComponent {
   public openCheckout(): void {
     if (!this.empresaId()) return;
     if (this.cart.items().length === 0) return;
+
     this.checkoutOpen.set(true);
     this.cartOpen.set(false);
+
     this.placeError.set(null);
     this.placeOk.set(false);
+    this.placeVentaId.set(null);
   }
 
   public closeCheckout(): void {
     this.checkoutOpen.set(false);
+  }
+
+  public setShipField(k: keyof CheckoutForm, v: any): void {
+    const cur = this.checkoutForm();
+    const next: CheckoutForm = { ...cur };
+
+    if (k === 'envio_costo' || k === 'descuento_total') {
+      next[k] = toMoney(v) as any;
+    } else {
+      next[k] = String(v ?? '');
+    }
+
+    this.checkoutForm.set(next);
+
+    if (this.placeError() === 'shipping_required') {
+      this.placeError.set(null);
+    }
+  }
+
+  public labelShipErr(k: ShipErrKey): string {
+    if (k === 'envio_departamento') return 'Departamento';
+    if (k === 'envio_ciudad') return 'Ciudad';
+    if (k === 'envio_zona_barrio') return 'Zona o barrio';
+    if (k === 'envio_direccion_linea') return 'Direccion exacta';
+    return 'Telefono del receptor';
   }
 
   public openAuth(mode: AuthMode, placeAfter: boolean): void {
@@ -250,6 +338,12 @@ export class ClientLayoutComponent {
       return;
     }
 
+    if (!this.shippingReady()) {
+      this.placeError.set('shipping_required');
+      this.checkoutOpen.set(true);
+      return;
+    }
+
     if (!this.hasToken()) {
       this.openAuth('login', true);
       return;
@@ -258,18 +352,33 @@ export class ClientLayoutComponent {
     this.placing.set(true);
     this.placeError.set(null);
     this.placeOk.set(false);
+    this.placeVentaId.set(null);
+
+    const f = this.checkoutForm();
 
     const payload = {
       items: this.cart.items().map((x) => ({
         producto_id: Number(x.producto_id),
         cantidad: Number(x.qty)
-      }))
+      })),
+      descuento_total: toMoney(f.descuento_total),
+      envio_departamento: cleanStr(f.envio_departamento),
+      envio_ciudad: cleanStr(f.envio_ciudad),
+      envio_zona_barrio: cleanStr(f.envio_zona_barrio),
+      envio_direccion_linea: cleanStr(f.envio_direccion_linea),
+      envio_referencia: cleanStr(f.envio_referencia),
+      envio_telefono_receptor: cleanStr(f.envio_telefono_receptor),
+      envio_costo: toMoney(f.envio_costo)
     };
 
     this._http.post<any>(`${API_BASE}/shop/${empresa_id}/orders`, payload).subscribe({
-      next: () => {
+      next: (res) => {
         this.placing.set(false);
         this.placeOk.set(true);
+
+        const venta_id = Number(res?.venta_id ?? 0);
+        this.placeVentaId.set(venta_id > 0 ? venta_id : null);
+
         this.cart.clear();
       },
       error: (e: any) => {
@@ -284,4 +393,22 @@ export class ClientLayoutComponent {
       }
     });
   }
+}
+
+function cleanStr(v: any): string | null {
+  const s = String(v ?? '').trim();
+  return s ? s : null;
+}
+
+function toMoney(v: any): number {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, n);
+}
+
+function isPhoneOk(v: any): boolean {
+  const s = String(v ?? '').trim();
+  if (!s) return false;
+  const digits = s.replace(/[^\d]/g, '');
+  return digits.length >= 7;
 }

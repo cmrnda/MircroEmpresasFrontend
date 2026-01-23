@@ -10,19 +10,16 @@ export class AuthFacade {
   private readonly _state = inject(AuthStateService);
   private readonly _router = inject(Router);
 
-  public login(
-    mode: AuthType,
-    payload: { email: string; password: string; empresa_id?: number }
-  ) {
+  public login(mode: AuthType, payload: { email: string; password: string; empresa_id?: number }) {
     if (mode === 'platform') {
-      return this._api.loginPlatform(payload).pipe(
+      return this._api.loginPlatform({ email: payload.email, password: payload.password }).pipe(
         tap(res => {
           const claims: AuthClaims = {
             type: 'platform',
             usuario_id: res.usuario.usuario_id,
             roles: ['PLATFORM_ADMIN']
           };
-          this._state.applyLogin(res.access_token, claims);
+          this._state.applyLogin(res.access_token, claims, res.refresh_token ?? null);
         }),
         map(() => true),
         catchError(() => of(false))
@@ -30,11 +27,10 @@ export class AuthFacade {
     }
 
     if (mode === 'user') {
-      return this._api.loginTenant({
-        email: payload.email,
-        password: payload.password,
-        empresa_id: payload.empresa_id as number
-      }).pipe(
+      const empresaId = payload.empresa_id ?? null;
+      if (empresaId === null) return of(false);
+
+      return this._api.loginTenant({ email: payload.email, password: payload.password, empresa_id: empresaId }).pipe(
         tap(res => {
           const claims: AuthClaims = {
             type: 'user',
@@ -42,25 +38,24 @@ export class AuthFacade {
             empresa_id: res.empresa_id,
             roles: res.roles
           };
-          this._state.applyLogin(res.access_token, claims);
+          this._state.applyLogin(res.access_token, claims, res.refresh_token ?? null);
         }),
         map(() => true),
         catchError(() => of(false))
       );
     }
 
-    return this._api.loginClient({
-      email: payload.email,
-      password: payload.password,
-      empresa_id: payload.empresa_id as number
-    }).pipe(
+    const empresaId = payload.empresa_id ?? null;
+    if (empresaId === null) return of(false);
+
+    return this._api.loginClient({ email: payload.email, password: payload.password, empresa_id: empresaId }).pipe(
       tap(res => {
         const claims: AuthClaims = {
           type: 'client',
           cliente_id: res.cliente.cliente_id,
           empresa_id: res.empresa_id
         };
-        this._state.applyLogin(res.access_token, claims);
+        this._state.applyLogin(res.access_token, claims, res.refresh_token ?? null);
       }),
       map(() => true),
       catchError(() => of(false))
@@ -68,10 +63,12 @@ export class AuthFacade {
   }
 
   public logout() {
+    const t = this._state.type() ?? 'platform';
+
     return this._api.logout().pipe(
       catchError(() => of({ ok: true })),
       tap(() => this._state.clear()),
-      tap(() => this._router.navigateByUrl('/login/platform'))
+      tap(() => this._router.navigateByUrl(`/login/${t}`))
     );
   }
 }

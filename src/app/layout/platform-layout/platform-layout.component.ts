@@ -2,13 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthFacade } from '../../core/auth/auth.facade';
 import { AuthStateService } from '../../core/auth/auth-state.service';
+import { NotificationsWidgetComponent } from '../../shared/notifications/notifications-widget.component';
 
 @Component({
   standalone: true,
   selector: 'app-platform-layout',
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationsWidgetComponent],
   templateUrl: './platform-layout.component.html'
 })
 export class PlatformLayoutComponent {
@@ -29,12 +31,18 @@ export class PlatformLayoutComponent {
     if (url.startsWith('/platform/clients')) return 'Clientes';
     if (url.startsWith('/platform/subscriptions')) return 'Suscripciones';
     if (url.startsWith('/platform/reset-password')) return 'Reset password';
+    if (url.startsWith('/platform/plans')) return 'Planes';
 
     return 'Resumen de plataforma';
   });
 
   public constructor() {
-    this._router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe();
+    this._router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
+      .subscribe();
   }
 
   public logout(): void {

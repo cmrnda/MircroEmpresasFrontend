@@ -1,25 +1,39 @@
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class TokenStorageService {
   private readonly _accessKey = 'access_token';
   private readonly _refreshKey = 'refresh_token';
 
+  private _storage(): Storage | null {
+    try {
+      return sessionStorage;
+    } catch {
+      return null;
+    }
+  }
+
   public getAccessToken(): string | null {
-    return localStorage.getItem(this._accessKey);
+    const st = this._storage();
+    return st ? st.getItem(this._accessKey) : null;
   }
 
   public getRefreshToken(): string | null {
-    return localStorage.getItem(this._refreshKey);
+    const st = this._storage();
+    return st ? st.getItem(this._refreshKey) : null;
   }
 
   public setTokens(accessToken: string, refreshToken: string): void {
-    localStorage.setItem(this._accessKey, accessToken);
-    localStorage.setItem(this._refreshKey, refreshToken);
+    const st = this._storage();
+    if (!st) return;
+    st.setItem(this._accessKey, accessToken);
+    st.setItem(this._refreshKey, refreshToken);
   }
 
   public clear(): void {
-    localStorage.removeItem(this._accessKey);
-    localStorage.removeItem(this._refreshKey);
+    const st = this._storage();
+    if (!st) return;
+    st.removeItem(this._accessKey);
+    st.removeItem(this._refreshKey);
   }
 }

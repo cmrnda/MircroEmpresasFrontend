@@ -1,6 +1,6 @@
 import { Injectable, computed, signal } from '@angular/core';
 
-export type CartItem = {
+export type PosTicketItem = {
   producto_id: number;
   descripcion: string;
   precio: number;
@@ -10,13 +10,13 @@ export type CartItem = {
 };
 
 @Injectable({ providedIn: 'root' })
-export class CartService {
+export class PosTicketService {
   private readonly _empresaId = signal<number | null>(null);
-  private readonly _items = signal<CartItem[]>([]);
+  private readonly _items = signal<PosTicketItem[]>([]);
 
   public readonly items = computed(() => this._items());
   public readonly count = computed(() => this._items().reduce((a, b) => a + toInt(b.qty), 0));
-  public readonly total = computed(() => this._items().reduce((a, b) => a + Number(b.precio || 0) * toInt(b.qty), 0));
+  public readonly subtotal = computed(() => this._items().reduce((a, b) => a + Number(b.precio || 0) * toInt(b.qty), 0));
 
   public setEmpresaId(empresa_id: number | null): void {
     const n = toInt(empresa_id);
@@ -36,17 +36,15 @@ export class CartService {
       if (pid > 0) byId.set(pid, stock);
     }
 
-    const next: CartItem[] = [];
+    const next: PosTicketItem[] = [];
     for (const it of this._items()) {
       const pid = toInt(it.producto_id);
       const stock = byId.has(pid) ? toInt(byId.get(pid)) : null;
-
       const max_qty = stock != null ? (stock > 0 ? stock : 0) : it.max_qty ?? null;
 
       if (max_qty === 0) continue;
 
       const qty = clampQty(it.qty, max_qty);
-
       if (qty <= 0) continue;
 
       next.push({ ...it, qty, max_qty });
@@ -65,7 +63,6 @@ export class CartService {
 
     const max_qty = normalizeMaxQty(p?.cantidad_actual ?? p?.max_qty ?? null);
     const addQty = clampQty(qty, max_qty);
-
     if (addQty <= 0) return;
 
     const next = [...this._items()];
@@ -117,7 +114,6 @@ export class CartService {
     const next = this._items()
       .map((x) => {
         if (toInt(x.producto_id) !== pid) return x;
-
         const q = clampQty(qty, x.max_qty);
         return { ...x, qty: q };
       })
@@ -147,10 +143,10 @@ export class CartService {
   }
 
   private _key(empresa_id: number | null): string {
-    return `cart_empresa_${empresa_id || 0}`;
+    return `pos_ticket_empresa_${empresa_id || 0}`;
   }
 
-  private _load(empresa_id: number | null): CartItem[] {
+  private _load(empresa_id: number | null): PosTicketItem[] {
     try {
       const raw = localStorage.getItem(this._key(empresa_id));
       if (!raw) return [];
@@ -170,16 +166,16 @@ export class CartService {
             primary_image_url: (x?.primary_image_url ?? null) as any,
             qty,
             max_qty
-          } as CartItem;
+          } as PosTicketItem;
         })
-        .filter((x: CartItem) => toInt(x.producto_id) > 0 && toInt(x.qty) > 0)
-        .filter((x: CartItem) => (x.max_qty === 0 ? false : true));
+        .filter((x: PosTicketItem) => toInt(x.producto_id) > 0 && toInt(x.qty) > 0)
+        .filter((x: PosTicketItem) => (x.max_qty === 0 ? false : true));
     } catch {
       return [];
     }
   }
 
-  private _save(empresa_id: number, items: CartItem[]): void {
+  private _save(empresa_id: number, items: PosTicketItem[]): void {
     try {
       localStorage.setItem(this._key(empresa_id), JSON.stringify(items || []));
     } catch {}

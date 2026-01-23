@@ -1,23 +1,33 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthStateService } from './auth-state.service';
+import { AuthStateService, AuthType } from './auth-state.service';
 
-export const authGuard: CanActivateFn = () => {
+function inferModeFromUrl(url: string): AuthType {
+  const u = String(url || '');
+  if (u.startsWith('/tenant')) return 'user';
+  if (u.startsWith('/client')) return 'client';
+  if (u.startsWith('/platform')) return 'platform';
+  return 'platform';
+}
+
+export const authGuard: CanActivateFn = (_, st) => {
   const state = inject(AuthStateService);
   const router = inject(Router);
 
   if (state.isAuthenticated()) return true;
-  router.navigateByUrl('/login/platform');
+
+  const mode = inferModeFromUrl(st.url);
+  router.navigateByUrl(`/login/${mode}`);
   return false;
 };
 
-export const typeGuard = (t: 'platform' | 'user' | 'client') => {
+export const typeGuard = (t: AuthType) => {
   const guard: CanActivateFn = () => {
     const state = inject(AuthStateService);
     const router = inject(Router);
 
     if (!state.isAuthenticated()) {
-      router.navigateByUrl('/login/platform');
+      router.navigateByUrl(`/login/${t}`);
       return false;
     }
 

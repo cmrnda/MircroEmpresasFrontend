@@ -1,15 +1,16 @@
-// src/app/layout/tenant-layout/tenant-layout.component.ts
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthFacade } from '../../core/auth/auth.facade';
 import { AuthStateService } from '../../core/auth/auth-state.service';
+import { NotificationsWidgetComponent } from '../../shared/notifications/notifications-widget.component';
 
 @Component({
   standalone: true,
   selector: 'app-tenant-layout',
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationsWidgetComponent],
   templateUrl: './tenant-layout.component.html'
 })
 export class TenantLayoutComponent {
@@ -36,12 +37,18 @@ export class TenantLayoutComponent {
     if (url.startsWith('/tenant/suppliers')) return 'Proveedores';
     if (url.startsWith('/tenant/purchases')) return 'Compras';
     if (url.startsWith('/tenant/expenses')) return 'Gastos';
+    if (url.startsWith('/tenant/pos')) return 'POS';
 
     return 'Resumen tenant';
   });
 
   public constructor() {
-    this._router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe();
+    this._router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
+      .subscribe();
   }
 
   public logout(): void {

@@ -27,6 +27,61 @@ export type PublicProductsResponse = {
   total: number;
 };
 
+export type CreateOrderItem = {
+  producto_id: number;
+  cantidad: number;
+  precio_unit?: number | null;
+  descuento?: number | null;
+};
+
+export type CreateOrderPayload = {
+  items: CreateOrderItem[];
+  descuento_total?: number | null;
+  envio_departamento?: string | null;
+  envio_ciudad?: string | null;
+  envio_zona_barrio?: string | null;
+  envio_direccion_linea?: string | null;
+  envio_referencia?: string | null;
+  envio_telefono_receptor?: string | null;
+  envio_costo?: number | null;
+};
+
+export type ShopOrderDetail = {
+  venta_detalle_id: number;
+  empresa_id: number;
+  venta_id: number;
+  producto_id: number;
+  cantidad: number;
+  precio_unit: number;
+  descuento: number;
+  subtotal: number;
+};
+
+export type ShopOrder = {
+  venta_id: number;
+  empresa_id: number;
+  cliente_id: number;
+  fecha_hora: string | null;
+  total: number;
+  descuento_total: number;
+  estado: string;
+
+  envio_departamento: string | null;
+  envio_ciudad: string | null;
+  envio_zona_barrio: string | null;
+  envio_direccion_linea: string | null;
+  envio_referencia: string | null;
+  envio_telefono_receptor: string | null;
+  envio_costo: number;
+  envio_estado: string | null;
+
+  detalle?: ShopOrderDetail[];
+};
+
+export type MyOrdersResponse = {
+  items: ShopOrder[];
+};
+
 @Injectable({ providedIn: 'root' })
 export class ClientShopApi {
   public constructor(private readonly _api: ApiClientService) {}
@@ -63,5 +118,17 @@ export class ClientShopApi {
 
   public getProduct(empresa_id: number, producto_id: number): Observable<ShopProduct> {
     return this._api.get<ShopProduct>(`/shop/${empresa_id}/products/${producto_id}`);
+  }
+
+  public createOrder(empresa_id: number, payload: CreateOrderPayload): Observable<ShopOrder> {
+    return this._api.post<ShopOrder>(`/shop/${empresa_id}/orders`, payload);
+  }
+
+  public listMyOrders(empresa_id: number): Observable<MyOrdersResponse> {
+    return this._api.get<MyOrdersResponse>(`/shop/${empresa_id}/my/orders`);
+  }
+
+  public getMyOrder(empresa_id: number, venta_id: number): Observable<ShopOrder> {
+    return this._api.get<ShopOrder>(`/shop/${empresa_id}/my/orders/${venta_id}`);
   }
 }

@@ -108,6 +108,18 @@
           <div class="text-sm text-slate-500">Platform</div>
           <div class="text-lg font-semibold truncate">{{ headerTitle() }}</div>
         </div>
+
+        <div class="flex items-center gap-2">
+          <app-notifications-widget></app-notifications-widget>
+
+          <button
+            (click)="logout()"
+            class="md:hidden inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+            type="button"
+          >
+            <span class="material-symbols-outlined text-base">logout</span>
+          </button>
+        </div>
       </div>
     </header>
 

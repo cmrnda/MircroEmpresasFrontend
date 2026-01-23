@@ -39,7 +39,9 @@ export const routes: Routes = [
       { path: 'settings', loadComponent: () => import('./pages/tenant/settings/tenant-settings.page').then(m => m.TenantSettingsPage) },
       { path: 'suppliers', loadComponent: () => import('./pages/tenant/suppliers/tenant-suppliers.page').then(m => m.TenantSuppliersPage) },
       { path: 'purchases', loadComponent: () => import('./pages/tenant/purchases/tenant-purchases.page').then(m => m.TenantPurchasesPage) },
-      { path: 'expenses', loadComponent: () => import('./pages/tenant/finance/tenant-expenses.page').then(m => m.TenantExpensesPage) }
+      { path: 'expenses', loadComponent: () => import('./pages/tenant/finance/tenant-expenses.page').then(m => m.TenantExpensesPage) },
+
+      { path: 'pos', loadComponent: () => import('./pages/tenant/pos/pos.page').then(m => m.TenantPosPage) }
     ]
   },
 
@@ -53,7 +55,7 @@ export const routes: Routes = [
 
     //   { path: 'cart', canActivate: [authGuard, typeGuard('client')], loadComponent: () => import('./pages/client/cart/cart.page').then(m => m.ClientCartPage) },
     //   { path: 'checkout', canActivate: [authGuard, typeGuard('client')], loadComponent: () => import('./pages/client/checkout/checkout.page').then(m => m.ClientCheckoutPage) },
-    //   { path: 'orders', canActivate: [authGuard, typeGuard('client')], loadComponent: () => import('./pages/client/orders/orders.page').then(m => m.ClientOrdersPage) },
+    //   { path: 'orders', canActivate: [authGuard, typeGuard(a'client')], loadComponent: () => import('./pages/client/orders/orders.page').then(m => m.ClientOrdersPage) },
     //   { path: 'orders/:venta_id', canActivate: [authGuard, typeGuard('client')], loadComponent: () => import('./pages/client/orders/order-detail.page').then(m => m.ClientOrderDetailPage) }
     ]
   },

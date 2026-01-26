@@ -1,6 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 import { catchError, finalize, of, tap } from 'rxjs';
-import { CreateTenantPurchaseRequest, ListTenantPurchasesResponse, TenantPurchase, TenantPurchasesApi } from './tenant-purchases.api';
+import {
+  AddPurchaseItemRequest,
+  CreateTenantPurchaseRequest,
+  ListTenantPurchasesResponse,
+  TenantPurchase,
+  TenantPurchasesApi,
+  UpdatePurchaseItemRequest
+} from './tenant-purchases.api';
 
 @Injectable({ providedIn: 'root' })
 export class TenantPurchasesFacade {
@@ -58,6 +65,58 @@ export class TenantPurchasesFacade {
     return this._api.cancel(compraId).pipe(
       catchError(err => {
         this.error.set(err?.error?.error ?? 'cancel_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
+  }
+
+  public addItem(compraId: number, payload: AddPurchaseItemRequest) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return this._api.addItem(compraId, payload).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'add_item_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
+  }
+
+  public updateItem(compraId: number, compraDetalleId: number, payload: UpdatePurchaseItemRequest) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return this._api.updateItem(compraId, compraDetalleId, payload).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'update_item_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
+  }
+
+  public deleteItem(compraId: number, compraDetalleId: number) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return this._api.deleteItem(compraId, compraDetalleId).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'delete_item_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
+  }
+
+  public downloadPdf(compraId: number) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return this._api.downloadPdf(compraId).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'pdf_failed');
         return of(null);
       }),
       finalize(() => this.loading.set(false))

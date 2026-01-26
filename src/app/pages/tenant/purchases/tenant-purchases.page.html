@@ -289,19 +289,33 @@
             <tbody class="divide-y">
             <tr *ngFor="let c of items()" class="hover:bg-slate-50">
               <td class="px-4 py-3 text-slate-700 tabular-nums">{{ c.compra_id }}</td>
+
               <td class="px-4 py-3">
                 <div class="font-medium text-slate-900">{{ supplierName(c.proveedor_id) }}</div>
                 <div class="text-xs text-slate-500">#{{ c.proveedor_id }}</div>
               </td>
+
               <td class="px-4 py-3 text-slate-700 tabular-nums">{{ c.fecha_hora }}</td>
+
               <td class="px-4 py-3 text-right text-slate-900 font-semibold tabular-nums">{{ c.total }}</td>
+
               <td class="px-4 py-3">
                   <span [ngClass]="estadoBadgeClass(c.estado)" class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium">
                     {{ c.estado }}
                   </span>
               </td>
+
               <td class="px-4 py-3 text-right">
                 <div class="flex items-center justify-end gap-2">
+                  <button
+                    (click)="openDetail(c.compra_id)"
+                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+                    type="button"
+                  >
+                    <span class="material-symbols-outlined text-base">visibility</span>
+                    Ver
+                  </button>
+
                   <button
                     *ngIf="c.estado === 'CREADA'"
                     (click)="receive(c.compra_id)"
@@ -345,10 +359,17 @@
             Regla: al presionar <span class="font-semibold">Recibir</span> se suma la cantidad al stock del producto.
           </div>
           <div class="text-xs text-slate-500">
-            Estados: <span class="font-medium">CREADA</span> (pendiente), <span class="font-medium">RECIBIDA</span> (stock aplicado), <span class="font-medium">ANULADA</span> (sin efecto)
+            Estados: <span class="font-medium">CREADA</span>, <span class="font-medium">RECIBIDA</span>, <span class="font-medium">ANULADA</span>
           </div>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<app-tenant-purchase-detail-modal
+  *ngIf="detailOpen() && detailCompraId()"
+  [compraId]="detailCompraId()!"
+  [products]="products()"
+  (closed)="closeDetail()"
+></app-tenant-purchase-detail-modal>

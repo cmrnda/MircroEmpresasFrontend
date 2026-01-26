@@ -4,13 +4,14 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { TenantPurchasesFacade } from './tenant-purchases.facade';
 import { TenantSuppliersApi, TenantSupplier } from '../suppliers/tenant-suppliers.api';
 import { TenantProductsApi, TenantProduct } from '../products/tenant-products.api';
+import { TenantPurchaseDetailModalComponent } from './detail-modal/tenant-purchase-detail.modal';
 
 type DraftItem = { producto_id: number; descripcion: string; cantidad: number; costo_unit: number; subtotal: number };
 
 @Component({
   standalone: true,
   selector: 'app-tenant-purchases-page',
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, TenantPurchaseDetailModalComponent],
   templateUrl: './tenant-purchases.page.html'
 })
 export class TenantPurchasesPage {
@@ -32,6 +33,9 @@ export class TenantPurchasesPage {
   public readonly draftItems = signal<DraftItem[]>([]);
   public readonly productPickerQ = signal('');
 
+  public readonly detailOpen = signal(false);
+  public readonly detailCompraId = signal<number | null>(null);
+
   public readonly totalDraft = computed(() => {
     const rows = this.draftItems() ?? [];
     return rows.reduce((acc, r) => acc + (Number(r.subtotal) || 0), 0);
@@ -52,6 +56,16 @@ export class TenantPurchasesPage {
     this._supApi.list({ includeInactivos: false }).subscribe(res => this.suppliers.set(res.items ?? []));
     this._prodApi.list({ includeInactivos: true }).subscribe(res => this.products.set(res.items ?? []));
     this.reload();
+  }
+
+  public openDetail(compraId: number): void {
+    this.detailCompraId.set(Number(compraId));
+    this.detailOpen.set(true);
+  }
+
+  public closeDetail(): void {
+    this.detailOpen.set(false);
+    this.detailCompraId.set(null);
   }
 
   public reload(): void {
@@ -139,7 +153,9 @@ export class TenantPurchasesPage {
     const q = (this.productPickerQ() || '').trim().toLowerCase();
     const rows = this.products() ?? [];
     if (!q) return rows.slice(0, 50);
-    return rows.filter(p => String(p.descripcion || '').toLowerCase().includes(q) || String(p.codigo || '').toLowerCase().includes(q)).slice(0, 50);
+    return rows
+        .filter(p => String(p.descripcion || '').toLowerCase().includes(q) || String(p.codigo || '').toLowerCase().includes(q))
+        .slice(0, 50);
   }
 
   private _toNumberOrZero(v: unknown): number {

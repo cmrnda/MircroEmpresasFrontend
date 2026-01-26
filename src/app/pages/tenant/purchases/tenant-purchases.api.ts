@@ -10,6 +10,8 @@ export type PurchaseDetail = {
   cantidad: number;
   costo_unit: number;
   subtotal: number;
+  lote?: string | null;
+  fecha_vencimiento?: string | null;
 };
 
 export type TenantPurchase = {
@@ -34,7 +36,24 @@ export type CreateTenantPurchaseRequest = {
     producto_id: number;
     cantidad: number;
     costo_unit: number;
+    lote?: string | null;
+    fecha_vencimiento?: string | null;
   }>;
+};
+
+export type AddPurchaseItemRequest = {
+  producto_id: number;
+  cantidad: number;
+  costo_unit: number;
+  lote?: string | null;
+  fecha_vencimiento?: string | null;
+};
+
+export type UpdatePurchaseItemRequest = {
+  cantidad?: number;
+  costo_unit?: number;
+  lote?: string | null;
+  fecha_vencimiento?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -57,11 +76,27 @@ export class TenantPurchasesApi {
     return this._api.post<TenantPurchase>('/tenant/purchases', payload);
   }
 
+  public addItem(compraId: number, payload: AddPurchaseItemRequest): Observable<TenantPurchase> {
+    return this._api.post<TenantPurchase>(`/tenant/purchases/${compraId}/items`, payload);
+  }
+
+  public updateItem(compraId: number, compraDetalleId: number, payload: UpdatePurchaseItemRequest): Observable<TenantPurchase> {
+    return this._api.put<TenantPurchase>(`/tenant/purchases/${compraId}/items/${compraDetalleId}`, payload);
+  }
+
+  public deleteItem(compraId: number, compraDetalleId: number): Observable<TenantPurchase> {
+    return this._api.delete<TenantPurchase>(`/tenant/purchases/${compraId}/items/${compraDetalleId}`);
+  }
+
   public receive(compraId: number): Observable<TenantPurchase> {
     return this._api.post<TenantPurchase>(`/tenant/purchases/${compraId}/receive`, {});
   }
 
   public cancel(compraId: number): Observable<TenantPurchase> {
     return this._api.post<TenantPurchase>(`/tenant/purchases/${compraId}/cancel`, {});
+  }
+
+  public downloadPdf(compraId: number): Observable<Blob> {
+    return this._api.getBlob(`/tenant/purchases/${compraId}/pdf`);
   }
 }

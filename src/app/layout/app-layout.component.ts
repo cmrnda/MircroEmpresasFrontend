@@ -1,234 +1,118 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
-import { interval, of, switchMap, catchError, tap } from 'rxjs';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {NotificationDto, NotificationsApi} from '../shared/notifications/notifications.api';
+import { LAYOUTS, LayoutConfig, NavItem } from './layout.data';
+import {AuthFacade} from '../core/auth/auth.facade';
 import {AuthStateService} from '../core/auth/auth-state.service';
-
-type NotifMode = 'platform' | 'tenant' | 'client';
+import {NotificationsWidgetComponent} from '../shared/notifications/notifications-widget.component';
 
 @Component({
   standalone: true,
-  selector: 'app-notifications-widget',
-  imports: [CommonModule],
-  templateUrl: './notifications-widget.component.html',
-  styleUrls: ['./notifications-widget.component.scss']
+  selector: 'app-layout',
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationsWidgetComponent],
+  templateUrl: './app-layout.component.html'
 })
-export class NotificationsWidgetComponent {
-  private readonly _api = inject(NotificationsApi);
-  private readonly _state = inject(AuthStateService);
-  private readonly _el = inject(ElementRef);
+export class AppLayoutComponent {
+  private readonly _router = inject(Router);
+  private readonly _route = inject(ActivatedRoute);
   private readonly _destroyRef = inject(DestroyRef);
 
-  public readonly open = signal(false);
-  public readonly loading = signal(false);
+  private readonly _auth = inject(AuthFacade);
+  private readonly _state = inject(AuthStateService);
 
-  public readonly unread = signal(0);
-  public readonly items = signal<NotificationDto[]>([]);
-  public readonly unreadOnly = signal(false);
+  public readonly type = this._state.type;
+  public readonly empresaId = this._state.empresaId;
+  public readonly usuarioId = this._state.usuarioId;
+  public readonly clienteId = this._state.clienteId;
 
-  public readonly mode = computed<NotifMode | null>(() => {
-    if (!this._state.isAuthenticated()) return null;
-    if (this._state.isPlatform()) return 'platform';
-    if (this._state.isTenantUser()) return 'tenant';
-    if (this._state.isClient()) return 'client';
-    return null;
+  public readonly hasToken = computed(() => !!this._state.token());
+
+  private readonly _url = signal(this._router.url || '');
+  private readonly _layoutKey = signal<string>('platform');
+
+  public readonly config = computed<LayoutConfig>(() => {
+    const k = this._layoutKey();
+    return LAYOUTS[k] ?? LAYOUTS['platform'];
   });
 
-  public readonly enabled = computed(() => this.mode() !== null);
+  public readonly headerTitle = computed(() => {
+    const cfg = this.config();
+    const url = normalizeUrl(this._url());
+    for (const r of cfg.titles.rules) {
+      if (url.startsWith(r.prefix)) return r.title;
+    }
+    return cfg.titles.fallback;
+  });
+
+  public readonly navItems = computed(() => this.config().nav);
+
+  public readonly sidebarOpen = signal(false);
+  public readonly sidebarCollapsed = signal(false);
+
+  public readonly sidebarWidthClass = computed(() => (this.sidebarCollapsed() ? 'md:w-20' : 'md:w-64'));
+  public readonly mainPadClass = computed(() => (this.sidebarCollapsed() ? 'md:pl-20' : 'md:pl-64'));
 
   public constructor() {
-    this.loadUnreadCount()
+    this._router.events
       .pipe(
-        catchError(() => of(null)),
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
         takeUntilDestroyed(this._destroyRef)
       )
-      .subscribe();
+      .subscribe(() => {
+        this._url.set(this._router.url || '');
+        this._layoutKey.set(readLayoutKey(this._route) || 'platform');
+        this.sidebarOpen.set(false);
+      });
 
-    interval(15000)
-      .pipe(
-        switchMap(() => (this.enabled() ? this.loadUnreadCount() : of(null))),
-        catchError(() => of(null)),
-        takeUntilDestroyed(this._destroyRef)
-      )
-      .subscribe();
+    this._layoutKey.set(readLayoutKey(this._route) || 'platform');
   }
 
-  public toggle(): void {
-    this.open.update(v => !v);
-    if (this.open()) this.refreshAll();
+  public logout(): void {
+    this._auth.logout().subscribe();
   }
 
-  public close(): void {
-    this.open.set(false);
+  public openSidebar(): void {
+    this.sidebarOpen.set(true);
   }
 
-  public refreshAll(): void {
-    if (!this.enabled()) return;
-
-    this.loading.set(true);
-
-    this.loadUnreadCount()
-      .pipe(
-        switchMap(() => this.loadList()),
-        tap(() => this.loading.set(false)),
-        catchError(() => {
-          this.loading.set(false);
-          return of(null);
-        }),
-        takeUntilDestroyed(this._destroyRef)
-      )
-      .subscribe();
+  public closeSidebar(): void {
+    this.sidebarOpen.set(false);
   }
 
-  public toggleUnreadOnly(): void {
-    this.unreadOnly.update(v => !v);
-    this.refreshAll();
+  public toggleSidebarMobile(): void {
+    this.sidebarOpen.set(!this.sidebarOpen());
   }
 
-  public markRead(n: NotificationDto): void {
-    if (!n || n.leido_en) return;
+  public toggleSidebarDesktop(): void {
+    this.sidebarCollapsed.set(!this.sidebarCollapsed());
+  }
 
-    const m = this.mode();
-    const empresaId = this._state.empresaId();
+  public isActive(it: NavItem): boolean {
+    const url = this._router.url || '';
+    const exact = !!it.exact;
 
-    if (m === 'client') {
-      if (empresaId == null) return;
-
-      this._api.clientMarkRead(toInt(empresaId), toInt(n.notificacion_id))
-        .pipe(
-          tap(() => this.applyLocalRead(toInt(n.notificacion_id))),
-          catchError(() => of(null)),
-          takeUntilDestroyed(this._destroyRef)
-        )
-        .subscribe();
-      return;
+    if (it.link.startsWith('/')) {
+      return exact ? url === it.link : url.startsWith(it.link);
     }
 
-    if (m === 'platform') {
-      this._api.platformMarkRead(toInt(n.notificacion_id))
-        .pipe(
-          tap(() => this.applyLocalRead(toInt(n.notificacion_id))),
-          catchError(() => of(null)),
-          takeUntilDestroyed(this._destroyRef)
-        )
-        .subscribe();
-      return;
-    }
-
-    this._api.tenantMarkRead(toInt(n.notificacion_id))
-      .pipe(
-        tap(() => this.applyLocalRead(toInt(n.notificacion_id))),
-        catchError(() => of(null)),
-        takeUntilDestroyed(this._destroyRef)
-      )
-      .subscribe();
-  }
-
-  public trackById(_: number, n: NotificationDto): number {
-    return n.notificacion_id;
-  }
-
-  public formatDate(iso: string): string {
-    try {
-      const d = new Date(iso);
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yy = d.getFullYear();
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mi = String(d.getMinutes()).padStart(2, '0');
-      return `${dd}/${mm}/${yy} ${hh}:${mi}`;
-    } catch {
-      return String(iso || '');
-    }
-  }
-
-  @HostListener('document:click', ['$event'])
-  public onDocClick(ev: MouseEvent): void {
-    if (!this.open()) return;
-
-    const target = ev.target as HTMLElement | null;
-    if (!target) return;
-
-    const host = this._el.nativeElement as HTMLElement;
-    if (!host.contains(target)) this.open.set(false);
-  }
-
-  @HostListener('document:keydown.escape')
-  public onEsc(): void {
-    if (this.open()) this.open.set(false);
-  }
-
-  private loadUnreadCount() {
-    const m = this.mode();
-    const empresaId = this._state.empresaId();
-
-    if (m === 'client') {
-      if (empresaId == null) return of(null);
-
-      return this._api.clientUnreadCount(toInt(empresaId)).pipe(
-        tap(res => this.unread.set(toInt(res?.data?.unread ?? 0))),
-        catchError(() => of(null))
-      );
-    }
-
-    if (m === 'platform') {
-      return this._api.platformUnreadCount().pipe(
-        tap(res => this.unread.set(toInt(res?.data?.unread ?? 0))),
-        catchError(() => of(null))
-      );
-    }
-
-    return this._api.tenantUnreadCount().pipe(
-      tap(res => this.unread.set(toInt(res?.data?.unread ?? 0))),
-      catchError(() => of(null))
-    );
-  }
-
-  private loadList() {
-    const m = this.mode();
-    const empresaId = this._state.empresaId();
-
-    const limit = 20;
-    const offset = 0;
-    const unreadOnly = this.unreadOnly();
-
-    if (m === 'client') {
-      if (empresaId == null) return of(null);
-
-      return this._api.clientList(toInt(empresaId), { limit, offset, unread_only: unreadOnly }).pipe(
-        tap(res => this.items.set((res?.data ?? []) as NotificationDto[])),
-        catchError(() => of(null))
-      );
-    }
-
-    if (m === 'platform') {
-      return this._api.platformList({ limit, offset, unread_only: unreadOnly }).pipe(
-        tap(res => this.items.set((res?.data ?? []) as NotificationDto[])),
-        catchError(() => of(null))
-      );
-    }
-
-    return this._api.tenantList({ limit, offset, unread_only: unreadOnly }).pipe(
-      tap(res => this.items.set((res?.data ?? []) as NotificationDto[])),
-      catchError(() => of(null))
-    );
-  }
-
-  private applyLocalRead(notificacionId: number): void {
-    const now = new Date().toISOString();
-
-    if (this.unreadOnly()) {
-      this.items.update(arr => arr.filter(x => x.notificacion_id !== notificacionId));
-    } else {
-      this.items.update(arr => arr.map(x => (x.notificacion_id === notificacionId ? { ...x, leido_en: now } : x)));
-    }
-
-    this.unread.update(v => Math.max(0, v - 1));
+    const u = normalizeUrl(url);
+    const target = '/' + String(it.link).replace(/^\//, '');
+    return exact ? u.endsWith(target) : u.includes(target);
   }
 }
 
-function toInt(v: any): number {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
+function readLayoutKey(route: ActivatedRoute): string | null {
+  let r: ActivatedRoute | null = route;
+  while (r?.firstChild) r = r.firstChild;
+  const key = r?.snapshot?.data?.['layoutKey'];
+  return typeof key === 'string' && key ? key : null;
+}
+
+function normalizeUrl(url: string): string {
+  const s = String(url || '');
+  const i = s.indexOf('?');
+  const base = i >= 0 ? s.slice(0, i) : s;
+  return base.replace(/\/+$/, '') || '/';
 }

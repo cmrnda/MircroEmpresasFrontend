@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CartService } from './cart.service';
-import { ClientShopApi, CreateOrderPayload } from '../shop/client-shop.api';
+import {CartService} from './cart.service';
+import {ClientShopApi} from '../store/client-shop.api';
+import {CreateOrderPayload} from '../shop/shop.api';
 
 type CheckoutForm = {
   envio_departamento: string;
@@ -18,12 +19,13 @@ type CheckoutForm = {
 
 @Component({
   standalone: true,
-  selector: 'app-client-cart-page',
+  selector: 'app-public-cart-page',
   imports: [CommonModule, RouterModule],
   templateUrl: './cart.page.html'
 })
-export class ClientCartPage {
+export class PublicCartPage {
   private readonly _route = inject(ActivatedRoute);
+  private readonly _router = inject(Router);
   private readonly _destroyRef = inject(DestroyRef);
 
   private readonly _cart = inject(CartService);
@@ -52,6 +54,8 @@ export class ClientCartPage {
   public readonly shipModal = signal(false);
   public readonly shipErrors = signal<string[]>([]);
 
+  public readonly authModal = signal(false);
+
   public ngOnInit(): void {
     const parent = this._route.parent;
 
@@ -73,6 +77,8 @@ export class ClientCartPage {
 
       this.shipModal.set(false);
       this.shipErrors.set([]);
+
+      this.authModal.set(false);
     });
   }
 
@@ -161,6 +167,22 @@ export class ClientCartPage {
     }
   }
 
+  private hasToken(): boolean {
+    return !!localStorage.getItem('access_token');
+  }
+
+  public goLogin(): void {
+    const empresa_id = this.empresaId();
+    if (!empresa_id) return;
+    this._router.navigate(['/shop', empresa_id, 'auth', 'login'], { queryParams: { redirect: this._router.url } });
+  }
+
+  public goRegister(): void {
+    const empresa_id = this.empresaId();
+    if (!empresa_id) return;
+    this._router.navigate(['/shop', empresa_id, 'auth', 'register'], { queryParams: { redirect: this._router.url } });
+  }
+
   public checkout(): void {
     this.placeError.set(null);
     this.successVentaId.set(null);
@@ -172,6 +194,11 @@ export class ClientCartPage {
       return;
     }
 
+    if (!this.hasToken()) {
+      this.authModal.set(true);
+      return;
+    }
+
     this._placeOrder();
   }
 
@@ -180,6 +207,12 @@ export class ClientCartPage {
     this.shipErrors.set(errs);
 
     if (errs.length) return;
+
+    if (!this.hasToken()) {
+      this.shipModal.set(false);
+      this.authModal.set(true);
+      return;
+    }
 
     this.shipModal.set(false);
     this._placeOrder();
@@ -229,6 +262,12 @@ export class ClientCartPage {
         this.placing.set(false);
       },
       error: (e: any) => {
+        const status = Number(e?.status ?? 0);
+        if (status === 401 || status === 422) {
+          this.authModal.set(true);
+          this.placing.set(false);
+          return;
+        }
         this.placeError.set(e?.error?.error ?? 'order_failed');
         this.placing.set(false);
       }

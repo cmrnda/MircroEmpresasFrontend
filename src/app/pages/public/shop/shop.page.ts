@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ClientShopFacade } from './client-shop.facade';
 import { CartService } from '../cart/cart.service';
+import {ClientShopFacade} from '../store/client-shop.facade';
 
 @Component({
   standalone: true,

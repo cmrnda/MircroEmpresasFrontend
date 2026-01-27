@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
 
 export type NotificationDto = {
   notificacion_id: number;
@@ -17,79 +16,41 @@ export type NotificationDto = {
 
 const BASE = 'http://127.0.0.1:5000';
 
-const TENANT_BASES = [
-  `${BASE}/notifications`,
-  `${BASE}/tenant/notifications`,
-  `${BASE}/api/notifications`
-];
-
-const PLATFORM_BASES = [
-  `${BASE}/platform/notifications`,
-  `${BASE}/platform/api/notifications`
-];
+const TENANT_BASE = `${BASE}/api/notifications`;
+const PLATFORM_BASE = `${BASE}/platform/api/notifications`;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsApi {
   private readonly _http = inject(HttpClient);
 
-  private firstGet<T>(urls: string[]): Observable<T> {
-    return this._http.get<T>(urls[0]).pipe(
-      catchError(err1 => {
-        if (err1?.status !== 404 || urls.length < 2) return throwError(() => err1);
-        return this._http.get<T>(urls[1]).pipe(
-          catchError(err2 => {
-            if (err2?.status !== 404 || urls.length < 3) return throwError(() => err2);
-            return this._http.get<T>(urls[2]);
-          })
-        );
-      })
-    );
-  }
-
-  private firstPost<T>(urls: string[], body: any): Observable<T> {
-    return this._http.post<T>(urls[0], body).pipe(
-      catchError(err1 => {
-        if (err1?.status !== 404 || urls.length < 2) return throwError(() => err1);
-        return this._http.post<T>(urls[1], body).pipe(
-          catchError(err2 => {
-            if (err2?.status !== 404 || urls.length < 3) return throwError(() => err2);
-            return this._http.post<T>(urls[2], body);
-          })
-        );
-      })
-    );
-  }
-
   public tenantUnreadCount() {
-    const urls = TENANT_BASES.map(b => `${b}/unread-count`);
-    return this.firstGet<{ data: { unread: number } }>(urls);
+    return this._http.get<{ data: { unread: number } }>(`${TENANT_BASE}/unread-count`);
   }
 
   public tenantList(params: { limit: number; offset: number; unread_only: boolean }) {
     const u = params.unread_only ? '1' : '0';
-    const urls = TENANT_BASES.map(b => `${b}/?limit=${params.limit}&offset=${params.offset}&unread_only=${u}`);
-    return this.firstGet<{ data: NotificationDto[] }>(urls);
+    return this._http.get<{ data: NotificationDto[] }>(
+      `${TENANT_BASE}/?limit=${params.limit}&offset=${params.offset}&unread_only=${u}`
+    );
   }
 
   public tenantMarkRead(notificacionId: number) {
-    const urls = TENANT_BASES.map(b => `${b}/${notificacionId}/read`);
-    return this.firstPost<{ data: NotificationDto }>(urls, {});
+    return this._http.post<{ data: NotificationDto }>(`${TENANT_BASE}/${notificacionId}/read`, {});
   }
 
   public platformUnreadCount() {
-    const urls = PLATFORM_BASES.map(b => `${b}/unread-count`);
-    return this.firstGet<{ data: { unread: number } }>(urls);
+    return this._http.get<{ data: { unread: number } }>(`${PLATFORM_BASE}/unread-count`);
   }
 
   public platformList(params: { limit: number; offset: number; unread_only: boolean }) {
     const u = params.unread_only ? '1' : '0';
-    const urls = PLATFORM_BASES.map(b => `${b}/?limit=${params.limit}&offset=${params.offset}&unread_only=${u}`);
-    return this.firstGet<{ data: NotificationDto[] }>(urls);
+    return this._http.get<{ data: NotificationDto[] }>(
+      `${PLATFORM_BASE}/?limit=${params.limit}&offset=${params.offset}&unread_only=${u}`
+    );
   }
 
   public platformMarkRead(notificacionId: number) {
-    const urls = PLATFORM_BASES.map(b => `${b}/${notificacionId}/read`);
-    return this.firstPost<{ data: NotificationDto }>(urls, {});
+    return this._http.post<{ data: NotificationDto }>(`${PLATFORM_BASE}/${notificacionId}/read`, {});
   }
 
   public clientUnreadCount(empresaId: number) {
@@ -104,6 +65,9 @@ export class NotificationsApi {
   }
 
   public clientMarkRead(empresaId: number, notificacionId: number) {
-    return this._http.post<{ data: NotificationDto }>(`${BASE}/shop/${empresaId}/notifications/${notificacionId}/read`, {});
+    return this._http.post<{ data: NotificationDto }>(
+      `${BASE}/shop/${empresaId}/notifications/${notificacionId}/read`,
+      {}
+    );
   }
 }

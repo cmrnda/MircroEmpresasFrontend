@@ -38,6 +38,13 @@ export class NotificationsWidgetComponent {
   public readonly enabled = computed(() => this.mode() !== null);
 
   public constructor() {
+    this.loadUnreadCount()
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this._destroyRef)
+      )
+      .subscribe();
+
     interval(15000)
       .pipe(
         switchMap(() => (this.enabled() ? this.loadUnreadCount() : of(null))),
@@ -50,6 +57,10 @@ export class NotificationsWidgetComponent {
   public toggle(): void {
     this.open.update(v => !v);
     if (this.open()) this.refreshAll();
+  }
+
+  public close(): void {
+    this.open.set(false);
   }
 
   public refreshAll(): void {
@@ -83,6 +94,7 @@ export class NotificationsWidgetComponent {
 
     if (m === 'client') {
       if (empresaId == null) return;
+
       this._api.clientMarkRead(toInt(empresaId), toInt(n.notificacion_id))
         .pipe(
           tap(() => this.applyLocalRead(toInt(n.notificacion_id))),
@@ -134,8 +146,10 @@ export class NotificationsWidgetComponent {
   @HostListener('document:click', ['$event'])
   public onDocClick(ev: MouseEvent): void {
     if (!this.open()) return;
+
     const target = ev.target as HTMLElement | null;
     if (!target) return;
+
     const host = this._el.nativeElement as HTMLElement;
     if (!host.contains(target)) this.open.set(false);
   }
@@ -151,6 +165,7 @@ export class NotificationsWidgetComponent {
 
     if (m === 'client') {
       if (empresaId == null) return of(null);
+
       return this._api.clientUnreadCount(toInt(empresaId)).pipe(
         tap(res => this.unread.set(toInt(res?.data?.unread ?? 0))),
         catchError(() => of(null))
@@ -180,6 +195,7 @@ export class NotificationsWidgetComponent {
 
     if (m === 'client') {
       if (empresaId == null) return of(null);
+
       return this._api.clientList(toInt(empresaId), { limit, offset, unread_only: unreadOnly }).pipe(
         tap(res => this.items.set((res?.data ?? []) as NotificationDto[])),
         catchError(() => of(null))

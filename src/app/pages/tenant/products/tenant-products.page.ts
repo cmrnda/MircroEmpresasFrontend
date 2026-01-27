@@ -1,217 +1,263 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { catchError, of, take, tap } from 'rxjs';
+
+import { TenantProduct, UpdateTenantProductRequest } from './tenant-products.api';
 import { TenantProductsFacade } from './tenant-products.facade';
-import { TenantProduct } from './tenant-products.api';
-import { TenantCategoriesApi, TenantCategory } from '../categories/tenant-categories.api';
+
+import { ProductsCreateCardComponent, ProductCreatePayload } from './components/products-create-card/products-create-card.component';
+import { ProductsTableComponent } from './components/products-table/products-table.component';
+
+export type Category = { categoria_id: number; nombre: string };
 
 @Component({
   standalone: true,
   selector: 'app-tenant-products-page',
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ProductsCreateCardComponent, ProductsTableComponent],
   templateUrl: './tenant-products.page.html'
 })
 export class TenantProductsPage {
   private readonly _fb = inject(FormBuilder);
-  private readonly _facade = inject(TenantProductsFacade);
-  private readonly _catsApi = inject(TenantCategoriesApi);
+  public readonly vm = inject(TenantProductsFacade);
 
-  public readonly loading = this._facade.loading;
-  public readonly error = this._facade.error;
-  public readonly items = this._facade.items;
+  public readonly categories = signal<Category[]>([]);
 
-  public readonly categories = signal<TenantCategory[]>([]);
-
-  public readonly includeInactivos = signal(false);
-  public readonly filterQ = signal('');
   public readonly filterCategoriaId = signal<number | null>(null);
+  public readonly filterQ = signal('');
+  public readonly includeInactivos = signal(false);
+
+  public readonly products = computed(() => this.vm.items());
+
+  public readonly totalCount = computed(() => this.products().length);
+  public readonly activeCount = computed(() => this.products().filter(x => x.activo).length);
+  public readonly inactiveCount = computed(() => this.products().filter(x => !x.activo).length);
+
+  public readonly filtered = computed(() => {
+    const q = this.filterQ().trim().toLowerCase();
+    const cat = this.filterCategoriaId();
+    const inc = this.includeInactivos();
+
+    return this.products().filter(p => {
+      if (!inc && !p.activo) return false;
+      if (cat != null && p.categoria_id !== cat) return false;
+      if (!q) return true;
+
+      const a = (p.codigo || '').toLowerCase();
+      const b = (p.descripcion || '').toLowerCase();
+      return a.includes(q) || b.includes(q);
+    });
+  });
+
+  public readonly createOpen = signal(false);
 
   public readonly editOpen = signal(false);
-  public readonly editingId = signal<number | null>(null);
-
   public readonly imageOpen = signal(false);
-  public readonly imageProductoId = signal<number | null>(null);
-  public readonly imageError = signal<string | null>(null);
-
-  public readonly filtered = computed(() => this.items());
-
-  public readonly form = this._fb.group({
-    categoria_id: [null as number | null, [Validators.required]],
-    codigo: ['', [Validators.required]],
-    descripcion: ['', [Validators.required]],
-    precio: [0 as number | null],
-    stock: [0 as number | null],
-    stock_min: [0 as number | null],
-    image_url: ['' as string | null]
-  });
+  public readonly selected = signal<TenantProduct | null>(null);
 
   public readonly editForm = this._fb.group({
     categoria_id: [null as number | null, [Validators.required]],
-    codigo: ['', [Validators.required]],
-    descripcion: ['', [Validators.required]],
-    precio: [0 as number | null],
-    stock: [0 as number | null],
-    stock_min: [0 as number | null],
+    codigo: ['', [Validators.required, Validators.maxLength(60)]],
+    descripcion: ['', [Validators.required, Validators.maxLength(160)]],
+    precio: [0, [Validators.required, Validators.min(0)]],
+    stock: [0, [Validators.required, Validators.min(0)]],
+    stock_min: [0, [Validators.required, Validators.min(0)]],
     activo: [true, [Validators.required]]
   });
 
   public readonly imageForm = this._fb.group({
-    image_url: ['', [Validators.required]]
+    image_url: ['' as string | null]
   });
 
+  public readonly imageError = signal<string | null>(null);
+
   public constructor() {
-    this._catsApi.list({ includeInactivos: true }).subscribe(res => {
-      this.categories.set(res.items ?? []);
-    });
-
-    this.reload();
-  }
-
-  public reload(): void {
-    const q = (this.filterQ() || '').trim() || undefined;
-    const categoriaId = this.filterCategoriaId() ?? undefined;
-
-    this._facade.load({
-      q,
-      categoriaId: categoriaId ?? undefined,
-      includeInactivos: this.includeInactivos()
-    }).subscribe();
-  }
-
-  public create(): void {
-    if (this.form.invalid) return;
-
-    const v = this.form.value;
-    const img = String(v.image_url || '').trim();
-
-    this._facade.create({
-      categoria_id: Number(v.categoria_id),
-      codigo: String(v.codigo || '').trim(),
-      descripcion: String(v.descripcion || '').trim(),
-      precio: this._toNumberOrZero(v.precio),
-      stock: this._toNumberOrZero(v.stock),
-      stock_min: this._toIntOrZero(v.stock_min),
-      image_url: img ? img : null
-    }).subscribe(res => {
-      if (!res) return;
-      this.form.reset({ categoria_id: null, codigo: '', descripcion: '', precio: 0, stock: 0, stock_min: 0, image_url: '' });
+    effect(() => {
       this.reload();
     });
   }
 
-  public openEdit(row: TenantProduct): void {
-    this.editingId.set(row.producto_id);
+  public loading(): boolean {
+    return this.vm.loading();
+  }
 
-    this.editForm.patchValue({
-      categoria_id: row.categoria_id,
-      codigo: row.codigo,
-      descripcion: row.descripcion,
-      precio: row.precio ?? 0,
-      stock: row.stock ?? 0,
-      stock_min: row.stock_min ?? 0,
-      activo: !!row.activo
-    });
+  public error(): string | null {
+    return this.vm.error();
+  }
 
+  public reload(): void {
+    const categoriaId = this.filterCategoriaId();
+    const q = this.filterQ().trim();
+    const includeInactivos = this.includeInactivos();
+
+    this.vm
+      .load({
+        q: q ? q : undefined,
+        categoriaId: categoriaId ?? undefined,
+        includeInactivos: includeInactivos ? true : undefined
+      })
+      .pipe(take(1))
+      .subscribe();
+  }
+
+  public openCreate(): void {
+    this.createOpen.set(true);
+  }
+
+  public closeCreate(): void {
+    this.createOpen.set(false);
+  }
+
+  public onCreate(payload: ProductCreatePayload): void {
+    this.vm
+      .create(payload)
+      .pipe(
+        take(1),
+        tap(res => {
+          if (res) {
+            this.closeCreate();
+            this.reload();
+          }
+        })
+      )
+      .subscribe();
+  }
+
+  public openEdit(p: TenantProduct): void {
+    this.selected.set(p);
+    this.editForm.reset(
+      {
+        categoria_id: p.categoria_id,
+        codigo: p.codigo,
+        descripcion: p.descripcion,
+        precio: Number(p.precio || 0),
+        stock: Number(p.stock || 0),
+        stock_min: Number(p.stock_min || 0),
+        activo: !!p.activo
+      },
+      { emitEvent: false }
+    );
     this.editOpen.set(true);
   }
 
   public closeEdit(): void {
     this.editOpen.set(false);
-    this.editingId.set(null);
+    this.selected.set(null);
   }
 
   public saveEdit(): void {
-    const id = this.editingId();
-    if (!id || this.editForm.invalid) return;
+    const p = this.selected();
+    if (!p) return;
+    if (this.vm.loading() || this.editForm.invalid) return;
 
-    const v = this.editForm.value;
+    const v = this.editForm.getRawValue();
 
-    this._facade.update(id, {
+    const body: UpdateTenantProductRequest = {
       categoria_id: Number(v.categoria_id),
       codigo: String(v.codigo || '').trim(),
       descripcion: String(v.descripcion || '').trim(),
-      precio: this._toNumberOrZero(v.precio),
-      stock: this._toNumberOrZero(v.stock),
-      stock_min: this._toIntOrZero(v.stock_min),
+      precio: Number(v.precio || 0),
+      stock: Number(v.stock || 0),
+      stock_min: Number(v.stock_min || 0),
       activo: !!v.activo
-    }).subscribe(res => {
-      if (!res) return;
-      this.closeEdit();
-      this.reload();
-    });
+    };
+
+    this.vm
+      .update(p.producto_id, body)
+      .pipe(
+        take(1),
+        tap(res => {
+          if (res) {
+            this.closeEdit();
+            this.reload();
+          }
+        })
+      )
+      .subscribe();
   }
 
-  public remove(id: number): void {
-    this._facade.remove(id).subscribe(() => this.reload());
-  }
-
-  public restore(id: number): void {
-    this._facade.restore(id).subscribe(() => this.reload());
-  }
-
-  public openImage(row: TenantProduct): void {
+  public openImage(p: TenantProduct): void {
+    this.selected.set(p);
+    this.imageForm.reset({ image_url: p.image_url ?? '' }, { emitEvent: false });
     this.imageError.set(null);
-    this.imageProductoId.set(row.producto_id);
-
-    const current = row.primary_image_url ?? row.image_url ?? null;
-    this.imageForm.reset({ image_url: current ? String(current) : '' });
-
     this.imageOpen.set(true);
   }
 
   public closeImage(): void {
     this.imageOpen.set(false);
-    this.imageProductoId.set(null);
+    this.selected.set(null);
     this.imageError.set(null);
   }
 
   public saveImage(): void {
-    const pid = this.imageProductoId();
-    if (!pid || this.imageForm.invalid) return;
+    const p = this.selected();
+    if (!p) return;
+    if (this.vm.loading()) return;
 
-    const v = this.imageForm.value;
-    const img = String(v.image_url || '').trim();
+    const v = this.imageForm.getRawValue();
+    const url = String(v.image_url || '').trim();
 
-    this._facade.update(pid, { image_url: img }).subscribe(res => {
-      if (!res) return;
-      this.closeImage();
-      this.reload();
-    });
+    this.vm
+      .update(p.producto_id, { image_url: url ? url : null })
+      .pipe(
+        take(1),
+        tap(res => {
+          if (res) {
+            this.closeImage();
+            this.reload();
+          }
+        }),
+        catchError(err => {
+          this.imageError.set(err?.error?.error ?? 'image_update_failed');
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
   public removeImage(): void {
-    const pid = this.imageProductoId();
-    if (!pid) return;
+    const p = this.selected();
+    if (!p) return;
 
-    this._facade.update(pid, { image_url: null }).subscribe(res => {
-      if (!res) return;
-      this.closeImage();
-      this.reload();
-    });
+    this.vm
+      .update(p.producto_id, { image_url: null })
+      .pipe(
+        take(1),
+        tap(res => {
+          if (res) {
+            this.closeImage();
+            this.reload();
+          }
+        }),
+        catchError(err => {
+          this.imageError.set(err?.error?.error ?? 'image_remove_failed');
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
-  public badgeClass(activo: boolean): string {
-    return activo ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700';
+  public remove(producto_id: number): void {
+    this.vm
+      .remove(producto_id)
+      .pipe(
+        take(1),
+        tap(res => {
+          if (res) this.reload();
+        })
+      )
+      .subscribe();
   }
 
-  public catName(categoriaId: number): string {
-    const c = (this.categories() ?? []).find(x => Number(x.categoria_id) === Number(categoriaId));
-    return c?.nombre ? String(c.nombre) : `#${categoriaId}`;
-  }
-
-  public productImg(p: TenantProduct): string | null {
-    const u = p.primary_image_url ?? p.image_url ?? null;
-    return u ? String(u) : null;
-  }
-
-  private _toNumberOrZero(v: unknown): number {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  private _toIntOrZero(v: unknown): number {
-    const n = Number(v);
-    if (!Number.isFinite(n)) return 0;
-    return Math.trunc(n);
+  public restore(producto_id: number): void {
+    this.vm
+      .restore(producto_id)
+      .pipe(
+        take(1),
+        tap(res => {
+          if (res) this.reload();
+        })
+      )
+      .subscribe();
   }
 }

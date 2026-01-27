@@ -1,0 +1,167 @@
+<div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+  <div class="px-4 py-4 border-b border-slate-200">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <div class="text-lg font-semibold">Listado</div>
+        <div class="text-sm text-slate-500">Filtra por categoria o texto</div>
+      </div>
+
+      <div class="w-full sm:w-auto grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
+        <select
+          (change)="filterCategoriaIdChange.emit(($any($event.target)).value ? toNumber(($any($event.target)).value) : null); reload.emit()"
+          [value]="filterCategoriaId ?? ''"
+          class="w-full sm:w-56 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+        >
+          <option value="">Todas las categorias</option>
+          <option *ngFor="let c of categories" [value]="c.categoria_id">{{ c.categoria_id }} - {{ c.nombre }}</option>
+        </select>
+
+        <div class="relative w-full sm:w-72">
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+          <input
+            (input)="filterQChange.emit(($any($event.target)).value); reload.emit()"
+            [value]="filterQ"
+            class="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-9 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            placeholder="Buscar por codigo o descripcion"
+            type="text"
+          />
+          <button
+            *ngIf="filterQ"
+            (click)="onClearQ(); reload.emit()"
+            class="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 hover:bg-slate-100"
+            type="button"
+            aria-label="Clear"
+          >
+            <span class="material-symbols-outlined text-base text-slate-500">close</span>
+          </button>
+        </div>
+
+        <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+          <input
+            (change)="includeInactivosChange.emit(($any($event.target)).checked); reload.emit()"
+            [checked]="includeInactivos"
+            class="h-4 w-4 rounded border-slate-300"
+            type="checkbox"
+          />
+          Ver inactivos
+        </label>
+
+        <button
+          (click)="reload.emit()"
+          [disabled]="loading"
+          class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+          type="button"
+        >
+          <span class="material-symbols-outlined text-base">refresh</span>
+          Actualizar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm min-w-[920px]">
+      <thead class="bg-slate-50 text-slate-600">
+      <tr>
+        <th class="px-4 py-3 text-left hidden sm:table-cell">ID</th>
+        <th class="px-4 py-3 text-left">Producto</th>
+        <th class="px-4 py-3 text-left hidden sm:table-cell">Categoria</th>
+        <th class="px-4 py-3 text-left">Precio</th>
+        <th class="px-4 py-3 text-left">Stock</th>
+        <th class="px-4 py-3 text-left">Estado</th>
+        <th class="px-4 py-3 text-right">Acciones</th>
+      </tr>
+      </thead>
+
+      <tbody class="divide-y">
+      <tr *ngFor="let p of products" class="hover:bg-slate-50">
+        <td class="px-4 py-3 hidden sm:table-cell text-slate-700">{{ p.producto_id }}</td>
+
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-lg border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
+              <img *ngIf="productImg(p)" [src]="productImg(p)" alt="img" class="h-full w-full object-cover" />
+              <span *ngIf="!productImg(p)" class="material-symbols-outlined text-slate-400">image</span>
+            </div>
+
+            <div class="min-w-0">
+              <div class="font-medium text-slate-900 truncate">{{ p.descripcion }}</div>
+              <div class="text-xs text-slate-500">
+                Codigo: {{ p.codigo }}
+                <span class="sm:hidden"> · ID: {{ p.producto_id }}</span>
+              </div>
+            </div>
+          </div>
+        </td>
+
+        <td class="px-4 py-3 hidden sm:table-cell text-slate-700">{{ catName(p.categoria_id) }}</td>
+
+        <td class="px-4 py-3 text-slate-700">{{ p.precio }}</td>
+
+        <td class="px-4 py-3">
+          <div class="text-slate-700">{{ p.stock }}</div>
+          <div class="text-xs text-slate-500">Min: {{ p.stock_min }}</div>
+        </td>
+
+        <td class="px-4 py-3">
+            <span [ngClass]="badgeClass(p.activo)" class="rounded-full px-2 py-1 text-xs font-medium">
+              {{ p.activo ? 'ACTIVO' : 'INACTIVO' }}
+            </span>
+        </td>
+
+        <td class="px-4 py-3 text-right">
+          <div class="flex items-center justify-end gap-2">
+            <button
+              (click)="edit.emit(p)"
+              class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+              type="button"
+            >
+              <span class="material-symbols-outlined text-base">edit</span>
+              <span class="hidden sm:inline">Editar</span>
+            </button>
+
+            <button
+              (click)="image.emit(p)"
+              class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+              type="button"
+            >
+              <span class="material-symbols-outlined text-base">image</span>
+              <span class="hidden sm:inline">Imagen</span>
+            </button>
+
+            <button
+              (click)="remove.emit(p.producto_id)"
+              *ngIf="p.activo"
+              class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+              type="button"
+            >
+              <span class="material-symbols-outlined text-base">delete</span>
+              <span class="hidden sm:inline">Eliminar</span>
+            </button>
+
+            <button
+              (click)="restore.emit(p.producto_id)"
+              *ngIf="!p.activo"
+              class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+              type="button"
+            >
+              <span class="material-symbols-outlined text-base">restore</span>
+              <span class="hidden sm:inline">Restaurar</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      <tr *ngIf="products.length === 0">
+        <td class="px-4 py-12 text-center text-slate-500" colspan="7">
+          <div class="mx-auto flex max-w-sm flex-col items-center gap-2">
+            <span class="material-symbols-outlined text-slate-400">search_off</span>
+            <div class="font-medium text-slate-700">Sin resultados</div>
+            <div class="text-sm text-slate-500">Prueba cambiando filtros o recargando</div>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

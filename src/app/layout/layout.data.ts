@@ -9,6 +9,7 @@ export type Brand = {
   icon: string;
   title: string;
   subtitle?: string;
+  logoAsset?: string;
 };
 
 export type TitleRule = {
@@ -118,20 +119,12 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
     brand: { icon: 'storefront', title: 'Cliente', subtitle: 'Cliente' },
     maxWidthClass: 'max-w-none',
     nav: [{ label: 'Tienda', icon: 'store', link: 'shop', exact: true }],
-    mobileNav: [
-      { label: 'Tienda', icon: 'store', link: 'shop', exact: true }
-    ],
+    mobileNav: [{ label: 'Tienda', icon: 'store', link: 'shop', exact: true }],
     titles: {
       rules: [{ prefix: '/shop', title: 'Tienda' }],
       fallback: 'Cliente'
     },
-    footer: {
-      showType: true,
-      showClienteId: true,
-      showEmpresaId: true,
-      warnEmpresaMissing: true,
-      logoutIfHasToken: true
-    },
+    footer: { showType: true, showClienteId: true, showEmpresaId: true, warnEmpresaMissing: true, logoutIfHasToken: true },
     header: { showNotifications: false, showEmpresaId: true }
   }
 };

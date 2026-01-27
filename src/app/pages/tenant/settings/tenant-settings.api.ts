@@ -4,18 +4,24 @@ import { ApiClientService } from '../../../core/http/api-client.service';
 
 export type TenantSettings = {
   empresa_id: number;
+  empresa_nombre: string | null;
 
   moneda: string;
   tasa_impuesto: number;
-  logo_url?: string | null;
 
-  actualizado_en?: string | null;
+  logo_url: string | null;
+  image_url: string | null;
+  descripcion: string | null;
+
+  actualizado_en: string | null;
 };
 
 export type UpdateTenantSettingsRequest = {
   moneda?: string;
   tasa_impuesto?: number;
   logo_url?: string | null;
+  image_url?: string | null;
+  descripcion?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })

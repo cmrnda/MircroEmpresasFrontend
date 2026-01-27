@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
     <div class="min-w-0">
       <div class="text-sm text-slate-500">Tenant</div>
-      <div class="text-2xl font-semibold">Configuracion</div>
+      <div class="text-2xl font-semibold">Settings</div>
       <div class="text-sm text-slate-500">Moneda, impuesto y branding</div>
     </div>
 
@@ -35,7 +35,7 @@
         <div class="flex items-center justify-between">
           <div>
             <div class="text-lg font-semibold">Preferencias</div>
-            <div class="text-sm text-slate-500">Ajustes generales del tenant</div>
+            <div class="text-sm text-slate-500">Ajustes generales y marca</div>
           </div>
           <span class="material-symbols-outlined text-slate-400">settings</span>
         </div>
@@ -62,8 +62,9 @@
                 type="number"
                 step="0.001"
                 min="0"
+                max="1"
               />
-              <div class="text-xs text-slate-500">Ej: 0.13 para 13%</div>
+              <div class="text-xs text-slate-500">Ej: 0.13</div>
             </div>
           </div>
 
@@ -75,6 +76,31 @@
               type="text"
               placeholder="https://..."
             />
+            <div class="text-xs text-slate-500">
+              Pega un link directo a la imagen (http/https). Si falla, se usa el logo por defecto.
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Image URL (cover)</label>
+            <input
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="image_url"
+              type="text"
+              placeholder="https://..."
+            />
+            <div class="text-xs text-slate-500">
+              Opcional. Puedes usarlo como banner en la tienda (cover).
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-sm font-medium text-slate-700">Descripcion</label>
+            <textarea
+              class="w-full min-h-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              formControlName="descripcion"
+              placeholder="Texto opcional..."
+            ></textarea>
           </div>
 
           <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -86,23 +112,41 @@
 
     <div class="lg:col-span-5">
       <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div class="text-lg font-semibold">Vista previa</div>
-        <div class="text-sm text-slate-500">Como se vera en el sistema</div>
+        <div class="text-lg font-semibold">Preview</div>
+        <div class="text-sm text-slate-500">Como se vera en el layout</div>
 
         <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div class="flex items-center gap-3">
             <div class="h-12 w-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center overflow-hidden">
-              <span class="material-symbols-outlined text-slate-400">image</span>
+              <img
+                *ngIf="form.controls.logo_url.value"
+                [src]="form.controls.logo_url.value"
+                alt="logo"
+                class="h-full w-full object-cover"
+                referrerpolicy="no-referrer"
+              />
+              <span *ngIf="!form.controls.logo_url.value" class="material-symbols-outlined text-slate-400">image</span>
             </div>
 
             <div class="min-w-0">
-              <div class="text-sm font-semibold text-slate-900">Moneda: {{ form.value.moneda || 'BOB' }}</div>
-              <div class="text-xs text-slate-500">Impuesto: {{ form.value.tasa_impuesto || '0' }}</div>
+              <div class="text-sm font-semibold text-slate-900 truncate">
+                {{ data()?.empresa_nombre || 'Empresa' }}
+              </div>
+              <div class="text-xs text-slate-500">Moneda: {{ form.controls.moneda.value }}</div>
             </div>
           </div>
 
-          <div class="mt-3 text-xs text-slate-500 break-all">
-            Logo URL: {{ form.value.logo_url || '-' }}
+          <div class="mt-3 text-xs text-slate-600 break-words">
+            {{ form.controls.descripcion.value || '-' }}
+          </div>
+
+          <div *ngIf="form.controls.image_url.value" class="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <img
+              [src]="form.controls.image_url.value"
+              alt="cover"
+              class="h-28 w-full object-cover"
+              referrerpolicy="no-referrer"
+            />
           </div>
         </div>
 

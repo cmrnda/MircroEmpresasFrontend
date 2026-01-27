@@ -1,118 +1,251 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LAYOUTS, LayoutConfig, NavItem } from './layout.data';
-import {AuthFacade} from '../core/auth/auth.facade';
-import {AuthStateService} from '../core/auth/auth-state.service';
-import {NotificationsWidgetComponent} from '../shared/notifications/notifications-widget.component';
+import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router, RouterModule } from '@angular/router';
+import { catchError, filter, of, take, tap } from 'rxjs';
+import { AuthStateService } from '../core/auth/auth-state.service';
+import { LayoutConfig, LAYOUTS, NavItem } from './layout.data';
+import { NotificationsWidgetComponent } from '../shared/notifications/notifications-widget.component';
+import { TenantBrandApi } from '../shared/tenant-brand/tenant-brand.api';
+import { TenantBrandStore } from '../shared/tenant-brand/tenant-brand.store';
+
+type LayoutKey = keyof typeof LAYOUTS;
+
+const DEFAULT_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#0f172a"/>
+<stop offset="1" stop-color="#334155"/>
+</linearGradient>
+</defs>
+<rect width="96" height="96" rx="20" fill="url(#g)"/>
+<circle cx="36" cy="40" r="10" fill="#e2e8f0"/>
+<path d="M18 74c4-14 16-22 30-22s26 8 30 22" fill="#e2e8f0"/>
+<path d="M62 20h14v14h-14z" fill="#94a3b8"/>
+</svg>`;
+
+const DEFAULT_LOGO_DATA_URI = `data:image/svg+xml,${encodeURIComponent(DEFAULT_LOGO_SVG)}`;
 
 @Component({
   standalone: true,
   selector: 'app-layout',
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, NotificationsWidgetComponent],
-  templateUrl: './app-layout.component.html'
+  imports: [CommonModule, RouterModule, NotificationsWidgetComponent],
+  templateUrl: './app-layout.component.html',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class AppLayoutComponent {
   private readonly _router = inject(Router);
   private readonly _route = inject(ActivatedRoute);
-  private readonly _destroyRef = inject(DestroyRef);
+  private readonly _auth = inject(AuthStateService);
+  private readonly _brandApi = inject(TenantBrandApi);
+  private readonly _brandStore = inject(TenantBrandStore);
 
-  private readonly _auth = inject(AuthFacade);
-  private readonly _state = inject(AuthStateService);
+  private readonly _layoutKey = signal<LayoutKey>('platform');
+  private readonly _url = signal<string>(String(this._router.url || '/'));
 
-  public readonly type = this._state.type;
-  public readonly empresaId = this._state.empresaId;
-  public readonly usuarioId = this._state.usuarioId;
-  public readonly clienteId = this._state.clienteId;
+  private readonly _sidebarOpen = signal(false);
+  private readonly _sidebarCollapsed = signal(false);
 
-  public readonly hasToken = computed(() => !!this._state.token());
+  private readonly _brandLoading = signal(false);
+  private readonly _brandError = signal(false);
+  private readonly _logoError = signal(false);
 
-  private readonly _url = signal(this._router.url || '');
-  private readonly _layoutKey = signal<string>('platform');
+  private _loadedEmpresaId: number | null = null;
 
   public readonly config = computed<LayoutConfig>(() => {
     const k = this._layoutKey();
-    return LAYOUTS[k] ?? LAYOUTS['platform'];
+    return (LAYOUTS[k] ?? LAYOUTS['platform']) as LayoutConfig;
+  });
+
+  public readonly navItems = computed<NavItem[]>(() => this.config().nav ?? []);
+
+  public readonly sidebarOpen = computed(() => this._sidebarOpen());
+  public readonly sidebarCollapsed = computed(() => this._sidebarCollapsed());
+
+  public readonly sidebarWidthClass = computed(() => (this._sidebarCollapsed() ? 'md:w-20' : 'md:w-72'));
+  public readonly mainPadClass = computed(() => (this._sidebarCollapsed() ? 'md:pl-20' : 'md:pl-72'));
+
+  public readonly layoutKey = computed(() => this._layoutKey());
+
+  public readonly empresaId = computed(() => {
+    const k = this._layoutKey();
+
+    if (k === 'tenant') {
+      const n = Number(this._auth.empresaId() ?? 0);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    }
+
+    if (k === 'client') {
+      return this.readEmpresaIdFromRoute();
+    }
+
+    return null;
+  });
+
+  public readonly brandName = computed(() => {
+    const k = this._layoutKey();
+    const cfg = this.config();
+
+    if (k === 'platform') return cfg.brand.title;
+
+    const n = this._brandStore.empresaNombre();
+    if (n) return n;
+
+    const eid = this.empresaId();
+    if (eid !== null) return `Empresa ${eid}`;
+
+    return cfg.brand.title;
+  });
+
+  public readonly brandLoading = computed(() => this._brandLoading());
+  public readonly brandError = computed(() => this._brandError());
+
+  public readonly logoSrc = computed(() => {
+    if (this._logoError()) return DEFAULT_LOGO_DATA_URI;
+
+    const k = this._layoutKey();
+    const cfg = this.config();
+
+    if (k === 'platform') {
+      const p = String(cfg.brand.logoAsset || '').trim();
+      return p ? p : DEFAULT_LOGO_DATA_URI;
+    }
+
+    const u = this._brandStore.logoUrl();
+    if (u && !this._brandError()) return u;
+
+    return DEFAULT_LOGO_DATA_URI;
   });
 
   public readonly headerTitle = computed(() => {
     const cfg = this.config();
-    const url = normalizeUrl(this._url());
-    for (const r of cfg.titles.rules) {
-      if (url.startsWith(r.prefix)) return r.title;
+    const url = this._url();
+
+    const rules = cfg?.titles?.rules ?? [];
+    let best: { prefix: string; title: string } | null = null;
+
+    for (const r of rules) {
+      const p = String(r.prefix || '');
+      if (!p) continue;
+
+      const hit = url.startsWith(p) || url.includes(p);
+      if (!hit) continue;
+
+      if (!best || p.length > best.prefix.length) best = { prefix: p, title: r.title };
     }
-    return cfg.titles.fallback;
+
+    return best?.title ?? (cfg?.titles?.fallback ?? '');
   });
 
-  public readonly navItems = computed(() => this.config().nav);
-
-  public readonly sidebarOpen = signal(false);
-  public readonly sidebarCollapsed = signal(false);
-
-  public readonly sidebarWidthClass = computed(() => (this.sidebarCollapsed() ? 'md:w-20' : 'md:w-64'));
-  public readonly mainPadClass = computed(() => (this.sidebarCollapsed() ? 'md:pl-20' : 'md:pl-64'));
-
   public constructor() {
-    this._router.events
+    this.syncFromRoute();
+
+    this._router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
+      this._url.set(String(this._router.url || '/'));
+      this.syncFromRoute();
+      this._sidebarOpen.set(false);
+      this.loadBrandIfNeeded();
+    });
+
+    effect(() => {
+      this.loadBrandIfNeeded();
+    });
+  }
+
+  private loadBrandIfNeeded(): void {
+    const k = this._layoutKey();
+    const eid = this.empresaId();
+
+    if (k === 'platform') {
+      this._loadedEmpresaId = null;
+      this._brandLoading.set(false);
+      this._brandError.set(false);
+      this._logoError.set(false);
+      this._brandStore.clear();
+      return;
+    }
+
+    if (eid === null) return;
+
+    if (this._loadedEmpresaId === eid) return;
+    this._loadedEmpresaId = eid;
+
+    this._brandLoading.set(true);
+    this._brandError.set(false);
+    this._logoError.set(false);
+
+    const req$ = k === 'tenant' ? this._brandApi.getBrand() : this._brandApi.getPublicBrand(eid);
+
+    req$
       .pipe(
-        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
-        takeUntilDestroyed(this._destroyRef)
+        take(1),
+        tap(res => {
+          if (res) this._brandStore.setBrand(res);
+        }),
+        catchError(() => {
+          this._brandError.set(true);
+          return of(null);
+        }),
+        tap(() => this._brandLoading.set(false))
       )
-      .subscribe(() => {
-        this._url.set(this._router.url || '');
-        this._layoutKey.set(readLayoutKey(this._route) || 'platform');
-        this.sidebarOpen.set(false);
-      });
-
-    this._layoutKey.set(readLayoutKey(this._route) || 'platform');
+      .subscribe();
   }
 
-  public logout(): void {
-    this._auth.logout().subscribe();
+  private syncFromRoute(): void {
+    const k = this.readLayoutKey(this._route);
+    this._layoutKey.set((k ?? 'platform') as LayoutKey);
   }
 
-  public openSidebar(): void {
-    this.sidebarOpen.set(true);
+  private readLayoutKey(ar: ActivatedRoute): LayoutKey | null {
+    let cur: ActivatedRoute | null = ar;
+    let last: LayoutKey | null = null;
+
+    while (cur) {
+      const dk = cur.snapshot?.data?.['layoutKey'];
+      if (dk) last = dk as LayoutKey;
+      cur = cur.firstChild ?? null;
+    }
+
+    return last;
   }
 
-  public closeSidebar(): void {
-    this.sidebarOpen.set(false);
+  private readEmpresaIdFromRoute(): number | null {
+    let cur: ActivatedRoute | null = this._route;
+    let raw: string | null = null;
+
+    while (cur) {
+      raw = cur.snapshot?.paramMap?.get('empresa_id') ?? raw;
+      cur = cur.firstChild ?? null;
+    }
+
+    const n = Number(raw ?? '');
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+
+  public hasToken(): boolean {
+    return !!this._auth.token();
   }
 
   public toggleSidebarMobile(): void {
-    this.sidebarOpen.set(!this.sidebarOpen());
+    this._sidebarOpen.set(!this._sidebarOpen());
+  }
+
+  public closeSidebar(): void {
+    this._sidebarOpen.set(false);
   }
 
   public toggleSidebarDesktop(): void {
-    this.sidebarCollapsed.set(!this.sidebarCollapsed());
+    this._sidebarCollapsed.set(!this._sidebarCollapsed());
   }
 
-  public isActive(it: NavItem): boolean {
-    const url = this._router.url || '';
-    const exact = !!it.exact;
-
-    if (it.link.startsWith('/')) {
-      return exact ? url === it.link : url.startsWith(it.link);
-    }
-
-    const u = normalizeUrl(url);
-    const target = '/' + String(it.link).replace(/^\//, '');
-    return exact ? u.endsWith(target) : u.includes(target);
+  public onLogoError(): void {
+    this._logoError.set(true);
+    this._brandError.set(true);
   }
-}
 
-function readLayoutKey(route: ActivatedRoute): string | null {
-  let r: ActivatedRoute | null = route;
-  while (r?.firstChild) r = r.firstChild;
-  const key = r?.snapshot?.data?.['layoutKey'];
-  return typeof key === 'string' && key ? key : null;
-}
-
-function normalizeUrl(url: string): string {
-  const s = String(url || '');
-  const i = s.indexOf('?');
-  const base = i >= 0 ? s.slice(0, i) : s;
-  return base.replace(/\/+$/, '') || '/';
+  public logout(): void {
+    const k = this._layoutKey() ?? 'platform';
+    this._brandStore.clear();
+    this._auth.clear();
+    this._router.navigateByUrl(`/login/${k === 'tenant' ? 'user' : k}`);
+  }
 }

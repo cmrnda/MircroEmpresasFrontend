@@ -85,7 +85,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
       { label: 'Proveedores', icon: 'local_shipping', link: '/tenant/suppliers', exact: true },
       { label: 'POS', icon: 'point_of_sale', link: '/tenant/pos', exact: true },
       { label: 'Compras', icon: 'shopping_cart', link: '/tenant/purchases', exact: true },
-      { label: 'Gastos', icon: 'account_balance_wallet', link: '/tenant/expenses', exact: true },
+      { label: 'Finanzas', icon: 'account_balance_wallet', link: '/tenant/finance', exact: true },
       { label: 'Configuraciones', icon: 'settings', link: '/tenant/settings', exact: true },
       { label: 'Mi password', icon: 'lock', link: '/account/password', exact: true }
     ],
@@ -94,7 +94,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
       { label: 'Cat', icon: 'category', link: '/tenant/categories', exact: true },
       { label: 'Prov', icon: 'local_shipping', link: '/tenant/suppliers', exact: true },
       { label: 'Comp', icon: 'shopping_cart', link: '/tenant/purchases', exact: true },
-      { label: 'Gast', icon: 'account_balance_wallet', link: '/tenant/expenses', exact: true }
+      { label: 'Gast', icon: 'account_balance_wallet', link: '/tenant/finance', exact: true }
     ],
     titles: {
       rules: [
@@ -106,7 +106,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
         { prefix: '/tenant/settings', title: 'Configuraciones' },
         { prefix: '/tenant/suppliers', title: 'Proveedores' },
         { prefix: '/tenant/purchases', title: 'Compras' },
-        { prefix: '/tenant/expenses', title: 'Gastos' },
+        { prefix: '/tenant/finance', title: 'Finanzas' },
         { prefix: '/tenant/pos', title: 'POS' }
       ],
       fallback: 'Resumen tenant'

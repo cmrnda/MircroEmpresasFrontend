@@ -1,0 +1,697 @@
+<section class="space-y-6">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div class="min-w-0">
+      <div class="text-sm text-slate-500">Tenant / Finanzas</div>
+      <div class="mt-1 text-2xl font-semibold text-slate-900">Panel de finanzas</div>
+      <div class="text-sm text-slate-500">Ingresos, egresos, utilidad, proveedores, ventas e inventario</div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        (click)="loadDashboard()"
+        [disabled]="loading()"
+        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60"
+      >
+        <span class="material-symbols-outlined text-base">refresh</span>
+        Recargar
+      </button>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
+    <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">
+      <div class="lg:col-span-3 space-y-1">
+        <label class="text-sm font-medium text-slate-700">Desde</label>
+        <input
+          type="date"
+          [ngModel]="from()"
+          (ngModelChange)="from.set($event)"
+          class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+        />
+      </div>
+
+      <div class="lg:col-span-3 space-y-1">
+        <label class="text-sm font-medium text-slate-700">Hasta</label>
+        <input
+          type="date"
+          [ngModel]="to()"
+          (ngModelChange)="to.set($event)"
+          class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+        />
+      </div>
+
+      <div class="lg:col-span-3 space-y-1">
+        <label class="text-sm font-medium text-slate-700">Agrupar</label>
+        <select
+          [ngModel]="group()"
+          (ngModelChange)="group.set($event)"
+          class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+        >
+          <option value="day">Dia</option>
+          <option value="month">Mes</option>
+        </select>
+      </div>
+
+      <div class="lg:col-span-3 flex items-end">
+        <button
+          type="button"
+          (click)="loadDashboard(); purchasesOffset.set(0); salesOffset.set(0)"
+          class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          <span class="material-symbols-outlined text-base">search</span>
+          Aplicar
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        (click)="tab.set('dashboard')"
+        class="px-3 py-2 text-sm rounded-xl border"
+        [class.bg-slate-900]="tab()==='dashboard'"
+        [class.text-white]="tab()==='dashboard'"
+        [class.border-slate-900]="tab()==='dashboard'"
+        [class.bg-white]="tab()!=='dashboard'"
+        [class.text-slate-700]="tab()!=='dashboard'"
+        [class.border-slate-200]="tab()!=='dashboard'"
+      >
+        Panel
+      </button>
+
+      <button
+        type="button"
+        (click)="tab.set('transactions')"
+        class="px-3 py-2 text-sm rounded-xl border"
+        [class.bg-slate-900]="tab()==='transactions'"
+        [class.text-white]="tab()==='transactions'"
+        [class.border-slate-900]="tab()==='transactions'"
+        [class.bg-white]="tab()!=='transactions'"
+        [class.text-slate-700]="tab()!=='transactions'"
+        [class.border-slate-200]="tab()!=='transactions'"
+      >
+        Movimientos
+      </button>
+
+      <button
+        type="button"
+        (click)="tab.set('inventory')"
+        class="px-3 py-2 text-sm rounded-xl border"
+        [class.bg-slate-900]="tab()==='inventory'"
+        [class.text-white]="tab()==='inventory'"
+        [class.border-slate-900]="tab()==='inventory'"
+        [class.bg-white]="tab()!=='inventory'"
+        [class.text-slate-700]="tab()!=='inventory'"
+        [class.border-slate-200]="tab()!=='inventory'"
+      >
+        Inventario
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="error()" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+    {{ error() }}
+  </div>
+
+  <div *ngIf="tab()==='dashboard'" class="space-y-6">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      <div class="lg:col-span-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-sm text-slate-500">Flujo</div>
+            <div class="text-base font-semibold text-slate-900">Ingresos vs Egresos</div>
+          </div>
+          <div class="text-xs text-slate-500">Ingresos (oscuro) / Egresos (claro)</div>
+        </div>
+
+        <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 overflow-x-auto">
+          <div class="min-w-[360px]">
+            <svg [attr.viewBox]="'0 0 ' + cashflowChart().w + ' ' + cashflowChart().h" class="w-full h-28">
+              <ng-container *ngFor="let b of cashflowChart().bars">
+                <rect
+                  [attr.x]="b.x"
+                  [attr.y]="b.y1"
+                  [attr.width]="b.bw"
+                  [attr.height]="b.h1"
+                  class="fill-slate-900"
+                  opacity="0.85"
+                  rx="2"
+                ></rect>
+                <rect
+                  [attr.x]="b.x + b.bw + 4"
+                  [attr.y]="b.y2"
+                  [attr.width]="b.bw"
+                  [attr.height]="b.h2"
+                  class="fill-slate-400"
+                  opacity="0.9"
+                  rx="2"
+                ></rect>
+              </ng-container>
+            </svg>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="text-sm text-slate-500">Ingresos</div>
+            <div class="mt-1 text-2xl font-semibold text-slate-900">{{ fmtMoney(overview()?.revenue_total ?? 0) }}</div>
+            <div class="mt-1 text-xs text-slate-500">Ventas: {{ overview()?.sales_count ?? 0 }}</div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="text-sm text-slate-500">Egresos</div>
+            <div class="mt-1 text-2xl font-semibold text-slate-900">{{ fmtMoney(overview()?.expenses_total ?? 0) }}</div>
+            <div class="mt-1 text-xs text-slate-500">Compras: {{ overview()?.purchases_count ?? 0 }}</div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="text-sm text-slate-500">Utilidad</div>
+            <div class="mt-1 text-2xl font-semibold" [class]="kpiProfitColor()">{{ fmtMoney(overview()?.profit_total ?? 0) }}</div>
+            <div class="mt-1 text-xs text-slate-500">Margen: {{ (overview()?.profit_margin_pct ?? 0).toFixed(2) }}%</div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="text-sm text-slate-500">Ticket promedio</div>
+            <div class="mt-1 text-sm text-slate-700">Prom. venta: <span class="font-semibold text-slate-900">{{ fmtMoney(overview()?.avg_sale_total ?? 0) }}</span></div>
+            <div class="mt-1 text-sm text-slate-700">Prom. compra: <span class="font-semibold text-slate-900">{{ fmtMoney(overview()?.avg_purchase_total ?? 0) }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-4 space-y-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="text-sm text-slate-500">Top proveedores</div>
+          <div class="text-base font-semibold text-slate-900">Por compras recibidas</div>
+
+          <div class="mt-3 space-y-2">
+            <div *ngFor="let it of suppliers()?.items" class="rounded-xl border border-slate-200 bg-white p-3">
+              <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold text-slate-900 truncate">{{ it.proveedor_nombre || 'Proveedor' }}</div>
+                  <div class="text-xs text-slate-500">Ultima: {{ fmtDate(it.ultima_compra_fecha) }}</div>
+                </div>
+                <div class="text-sm font-semibold text-slate-900">{{ fmtMoney(it.compras_total) }}</div>
+              </div>
+            </div>
+
+            <div *ngIf="!(suppliers()?.items?.length)" class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              Sin datos
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="text-sm text-slate-500">Alertas de stock</div>
+          <div class="text-base font-semibold text-slate-900">Stock bajo</div>
+
+          <div class="mt-3 space-y-2">
+            <div *ngFor="let it of invAlerts()?.items" class="rounded-xl border border-slate-200 bg-white p-3">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-sm font-semibold text-slate-900 truncate">{{ it.codigo }} - {{ it.descripcion }}</div>
+                  <div class="text-xs text-slate-500 truncate">{{ it.categoria_nombre || 'Sin categoria' }}</div>
+                </div>
+                <div class="text-sm font-semibold text-rose-700">
+                  {{ it.stock }} / {{ it.stock_min }}
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="!(invAlerts()?.items?.length)" class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              Sin alertas
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      <div class="lg:col-span-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="text-sm text-slate-500">Top productos</div>
+        <div class="text-base font-semibold text-slate-900">Por total vendido</div>
+
+        <div class="mt-3 overflow-x-auto rounded-xl border border-slate-200">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="px-4 py-3 text-left font-semibold">Producto</th>
+              <th class="px-4 py-3 text-right font-semibold">Cantidad</th>
+              <th class="px-4 py-3 text-right font-semibold">Total</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+            <tr *ngFor="let it of topProducts()?.items">
+              <td class="px-4 py-3">
+                <div class="font-semibold text-slate-900">{{ it.codigo }}</div>
+                <div class="text-xs text-slate-500 truncate max-w-[420px]">{{ it.descripcion }}</div>
+              </td>
+              <td class="px-4 py-3 text-right text-slate-700">{{ it.qty }}</td>
+              <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ fmtMoney(it.total) }}</td>
+            </tr>
+            <tr *ngIf="!(topProducts()?.items?.length)">
+              <td class="px-4 py-6 text-center text-slate-500" colspan="3">Sin datos</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="text-sm text-slate-500">Top categorias</div>
+        <div class="text-base font-semibold text-slate-900">Por total vendido</div>
+
+        <div class="mt-3 space-y-2">
+          <div *ngFor="let it of topCategories()?.items" class="rounded-xl border border-slate-200 bg-white p-3">
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-sm font-semibold text-slate-900 truncate">{{ it.categoria_nombre }}</div>
+              <div class="text-sm font-semibold text-slate-900">{{ fmtMoney(it.total) }}</div>
+            </div>
+          </div>
+
+          <div *ngIf="!(topCategories()?.items?.length)" class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            Sin datos
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="tab()==='transactions'" class="space-y-4">
+    <div class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        (click)="txTab.set('purchases'); loadPurchases()"
+        class="px-3 py-2 text-sm rounded-xl border"
+        [class.bg-slate-900]="txTab()==='purchases'"
+        [class.text-white]="txTab()==='purchases'"
+        [class.border-slate-900]="txTab()==='purchases'"
+        [class.bg-white]="txTab()!=='purchases'"
+        [class.text-slate-700]="txTab()!=='purchases'"
+        [class.border-slate-200]="txTab()!=='purchases'"
+      >
+        Compras
+      </button>
+
+      <button
+        type="button"
+        (click)="txTab.set('sales'); loadSales()"
+        class="px-3 py-2 text-sm rounded-xl border"
+        [class.bg-slate-900]="txTab()==='sales'"
+        [class.text-white]="txTab()==='sales'"
+        [class.border-slate-900]="txTab()==='sales'"
+        [class.bg-white]="txTab()!=='sales'"
+        [class.text-slate-700]="txTab()!=='sales'"
+        [class.border-slate-200]="txTab()!=='sales'"
+      >
+        Ventas
+      </button>
+    </div>
+
+    <div *ngIf="txTab()==='purchases'" class="space-y-4">
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">
+          <div class="lg:col-span-4 space-y-1">
+            <label class="text-sm font-medium text-slate-700">Estado</label>
+            <select
+              [ngModel]="purchasesEstado()"
+              (ngModelChange)="purchasesEstado.set($event); purchasesOffset.set(0); loadPurchases()"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+            >
+              <option value="">Todos</option>
+              <option value="CREADA">CREADA</option>
+              <option value="RECIBIDA">RECIBIDA</option>
+              <option value="ANULADA">ANULADA</option>
+            </select>
+          </div>
+
+          <div class="lg:col-span-4 space-y-1">
+            <label class="text-sm font-medium text-slate-700">Proveedor</label>
+            <select
+              [ngModel]="purchasesProveedorId()"
+              (ngModelChange)="purchasesProveedorId.set($event === '' ? null : $event); purchasesOffset.set(0); loadPurchases()"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+            >
+              <option [ngValue]="null">Todos</option>
+              <option *ngFor="let it of suppliers()?.items" [ngValue]="it.proveedor_id">
+                {{ it.proveedor_nombre || ('Proveedor ' + it.proveedor_id) }}
+              </option>
+            </select>
+          </div>
+
+          <div class="lg:col-span-4 flex items-end gap-2">
+            <select
+              [ngModel]="purchasesLimit()"
+              (ngModelChange)="purchasesLimit.set($event); purchasesOffset.set(0); loadPurchases()"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+            >
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+            </select>
+
+            <button
+              type="button"
+              (click)="loadPurchases()"
+              [disabled]="purchasesLoading()"
+              class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+            >
+              <span class="material-symbols-outlined text-base">refresh</span>
+              Actualizar
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="purchasesError()" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {{ purchasesError() }}
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="px-4 py-3 text-left font-semibold">Compra</th>
+              <th class="px-4 py-3 text-left font-semibold">Proveedor</th>
+              <th class="px-4 py-3 text-left font-semibold">Fecha</th>
+              <th class="px-4 py-3 text-right font-semibold">Total</th>
+              <th class="px-4 py-3 text-left font-semibold">Estado</th>
+              <th class="px-4 py-3"></th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+            <tr *ngFor="let row of purchases()?.items" class="hover:bg-slate-50">
+              <td class="px-4 py-3">
+                <div class="font-semibold text-slate-900">#{{ row.compra_id }}</div>
+                <div class="text-xs text-slate-500 truncate max-w-[280px]">{{ row.observacion || '-' }}</div>
+              </td>
+              <td class="px-4 py-3 text-slate-700">{{ row.proveedor_nombre || ('ID ' + (row.proveedor_id ?? '-')) }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ fmtDate(row.fecha_hora) }}</td>
+              <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ fmtMoney(row.total) }}</td>
+              <td class="px-4 py-3">
+                  <span class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold" [ngClass]="chipClass(row.estado)">
+                    {{ row.estado }}
+                  </span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <button
+                  type="button"
+                  (click)="openPurchaseDetail(row)"
+                  class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50"
+                >
+                  <span class="material-symbols-outlined text-base">visibility</span>
+                  Ver detalle
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="purchasesLoading()">
+              <td class="px-4 py-6 text-center text-slate-500" colspan="6">Cargando...</td>
+            </tr>
+
+            <tr *ngIf="!purchasesLoading() && !(purchases()?.items?.length)">
+              <td class="px-4 py-6 text-center text-slate-500" colspan="6">Sin resultados</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="txTab()==='sales'" class="space-y-4">
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">
+          <div class="lg:col-span-4 space-y-1">
+            <label class="text-sm font-medium text-slate-700">Estado</label>
+            <input
+              [ngModel]="salesEstado()"
+              (ngModelChange)="salesEstado.set($event); salesOffset.set(0); loadSales()"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+              placeholder="CREADA"
+              type="text"
+            />
+          </div>
+
+          <div class="lg:col-span-4 space-y-1">
+            <label class="text-sm font-medium text-slate-700">ID cliente</label>
+            <input
+              [ngModel]="salesClienteId()"
+              (ngModelChange)="salesClienteId.set($event === '' ? null : $event); salesOffset.set(0); loadSales()"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+              placeholder="123"
+              type="number"
+            />
+          </div>
+
+          <div class="lg:col-span-4 flex items-end gap-2">
+            <select
+              [ngModel]="salesLimit()"
+              (ngModelChange)="salesLimit.set($event); salesOffset.set(0); loadSales()"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
+            >
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+            </select>
+
+            <button
+              type="button"
+              (click)="loadSales()"
+              [disabled]="salesLoading()"
+              class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+            >
+              <span class="material-symbols-outlined text-base">refresh</span>
+              Actualizar
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="salesError()" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {{ salesError() }}
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="px-4 py-3 text-left font-semibold">Venta</th>
+              <th class="px-4 py-3 text-left font-semibold">Cliente</th>
+              <th class="px-4 py-3 text-left font-semibold">Fecha</th>
+              <th class="px-4 py-3 text-right font-semibold">Total</th>
+              <th class="px-4 py-3 text-left font-semibold">Estado</th>
+              <th class="px-4 py-3"></th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+            <tr *ngFor="let row of sales()?.items" class="hover:bg-slate-50">
+              <td class="px-4 py-3">
+                <div class="font-semibold text-slate-900">#{{ row.venta_id }}</div>
+                <div class="text-xs text-slate-500">ID cliente: {{ row.cliente_id }}</div>
+              </td>
+              <td class="px-4 py-3 text-slate-700">{{ row.cliente_nombre || '-' }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ fmtDate(row.fecha_hora) }}</td>
+              <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ fmtMoney(row.total) }}</td>
+              <td class="px-4 py-3">
+                  <span class="inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold" [ngClass]="chipClass(row.estado)">
+                    {{ row.estado }}
+                  </span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <button
+                  type="button"
+                  (click)="openSaleDetail(row)"
+                  class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50"
+                >
+                  <span class="material-symbols-outlined text-base">visibility</span>
+                  Ver detalle
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="salesLoading()">
+              <td class="px-4 py-6 text-center text-slate-500" colspan="6">Cargando...</td>
+            </tr>
+
+            <tr *ngIf="!salesLoading() && !(sales()?.items?.length)">
+              <td class="px-4 py-6 text-center text-slate-500" colspan="6">Sin resultados</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="tab()==='inventory'" class="space-y-4">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      <div class="lg:col-span-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="text-sm text-slate-500">Valorizacion de inventario</div>
+        <div class="text-base font-semibold text-slate-900">Valor del stock</div>
+
+        <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="text-sm text-slate-500">Valor por precio</div>
+            <div class="mt-1 text-2xl font-semibold text-slate-900">{{ fmtMoney(invVal()?.inventory_price_value ?? 0) }}</div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-white p-4">
+            <div class="text-sm text-slate-500">Valor por costo promedio</div>
+            <div class="mt-1 text-2xl font-semibold text-slate-900">{{ fmtMoney(invVal()?.inventory_avg_cost_value ?? 0) }}</div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          (click)="loadInventory()"
+          class="mt-4 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
+        >
+          <span class="material-symbols-outlined text-base">refresh</span>
+          Actualizar
+        </button>
+      </div>
+
+      <div class="lg:col-span-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="text-sm text-slate-500">Alertas de stock</div>
+        <div class="text-base font-semibold text-slate-900">Productos por debajo del minimo</div>
+
+        <div class="mt-3 overflow-x-auto rounded-xl border border-slate-200">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="px-4 py-3 text-left font-semibold">Producto</th>
+              <th class="px-4 py-3 text-left font-semibold">Categoria</th>
+              <th class="px-4 py-3 text-right font-semibold">Stock</th>
+              <th class="px-4 py-3 text-right font-semibold">Minimo</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+            <tr *ngFor="let it of invAlerts()?.items">
+              <td class="px-4 py-3">
+                <div class="font-semibold text-slate-900">{{ it.codigo }}</div>
+                <div class="text-xs text-slate-500 truncate max-w-[420px]">{{ it.descripcion }}</div>
+              </td>
+              <td class="px-4 py-3 text-slate-700">{{ it.categoria_nombre || '-' }}</td>
+              <td class="px-4 py-3 text-right font-semibold text-rose-700">{{ it.stock }}</td>
+              <td class="px-4 py-3 text-right text-slate-700">{{ it.stock_min }}</td>
+            </tr>
+
+            <tr *ngIf="!(invAlerts()?.items?.length)">
+              <td class="px-4 py-6 text-center text-slate-500" colspan="4">Sin alertas</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="purchaseModalOpen()" class="fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/40" (click)="closePurchaseDetail()"></div>
+    <div class="absolute inset-0 flex items-end sm:items-center justify-center p-3">
+      <div class="w-full sm:max-w-3xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200">
+          <div class="min-w-0">
+            <div class="text-sm text-slate-500">Detalle de compra</div>
+            <div class="text-base font-semibold text-slate-900 truncate">
+              #{{ purchaseDetail()?.compra?.compra_id || '-' }} - {{ purchaseDetail()?.compra?.proveedor_nombre || 'Proveedor' }}
+            </div>
+          </div>
+          <button type="button" (click)="closePurchaseDetail()" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50">
+            <span class="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+
+        <div class="p-4 space-y-4">
+          <div *ngIf="purchaseDetailLoading()" class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Cargando...</div>
+          <div *ngIf="purchaseDetailError()" class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{{ purchaseDetailError() }}</div>
+
+          <div *ngIf="purchaseDetail() && !purchaseDetailLoading()" class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 text-slate-600">
+              <tr>
+                <th class="px-4 py-3 text-left font-semibold">ID producto</th>
+                <th class="px-4 py-3 text-right font-semibold">Cantidad</th>
+                <th class="px-4 py-3 text-right font-semibold">Costo</th>
+                <th class="px-4 py-3 text-right font-semibold">Subtotal</th>
+              </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+              <tr *ngFor="let it of purchaseDetail()?.items">
+                <td class="px-4 py-3 text-slate-700">{{ it.producto_id }}</td>
+                <td class="px-4 py-3 text-right text-slate-700">{{ it.cantidad }}</td>
+                <td class="px-4 py-3 text-right text-slate-700">{{ fmtMoney(it.costo_unit) }}</td>
+                <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ fmtMoney(it.subtotal) }}</td>
+              </tr>
+              <tr *ngIf="!(purchaseDetail()?.items?.length)">
+                <td class="px-4 py-6 text-center text-slate-500" colspan="4">Sin items</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center justify-end">
+            <button type="button" (click)="closePurchaseDetail()" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="saleModalOpen()" class="fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/40" (click)="closeSaleDetail()"></div>
+    <div class="absolute inset-0 flex items-end sm:items-center justify-center p-3">
+      <div class="w-full sm:max-w-3xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200">
+          <div class="min-w-0">
+            <div class="text-sm text-slate-500">Detalle de venta</div>
+            <div class="text-base font-semibold text-slate-900 truncate">
+              #{{ saleDetail()?.venta?.venta_id || '-' }} - {{ saleDetail()?.venta?.cliente_nombre || 'Cliente' }}
+            </div>
+          </div>
+          <button type="button" (click)="closeSaleDetail()" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50">
+            <span class="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+
+        <div class="p-4 space-y-4">
+          <div *ngIf="saleDetailLoading()" class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Cargando...</div>
+          <div *ngIf="saleDetailError()" class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{{ saleDetailError() }}</div>
+
+          <div *ngIf="saleDetail() && !saleDetailLoading()" class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 text-slate-600">
+              <tr>
+                <th class="px-4 py-3 text-left font-semibold">Producto</th>
+                <th class="px-4 py-3 text-right font-semibold">Cantidad</th>
+                <th class="px-4 py-3 text-right font-semibold">Precio</th>
+                <th class="px-4 py-3 text-right font-semibold">Subtotal</th>
+              </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+              <tr *ngFor="let it of saleDetail()?.items">
+                <td class="px-4 py-3">
+                  <div class="font-semibold text-slate-900">{{ it.producto_codigo || ('ID ' + it.producto_id) }}</div>
+                  <div class="text-xs text-slate-500 truncate max-w-[420px]">{{ it.producto_descripcion || '-' }}</div>
+                </td>
+                <td class="px-4 py-3 text-right text-slate-700">{{ it.cantidad }}</td>
+                <td class="px-4 py-3 text-right text-slate-700">{{ fmtMoney(it.precio_unit) }}</td>
+                <td class="px-4 py-3 text-right font-semibold text-slate-900">{{ fmtMoney(it.subtotal) }}</td>
+              </tr>
+              <tr *ngIf="!(saleDetail()?.items?.length)">
+                <td class="px-4 py-6 text-center text-slate-500" colspan="4">Sin items</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center justify-end">
+            <button type="button" (click)="closeSaleDetail()" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

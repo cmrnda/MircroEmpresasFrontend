@@ -39,7 +39,7 @@ export const routes: Routes = [
       { path: 'settings', loadComponent: () => import('./pages/tenant/settings/tenant-settings.page').then(m => m.TenantSettingsPage), data: { layoutKey: 'tenant' } },
       { path: 'suppliers', loadComponent: () => import('./pages/tenant/suppliers/tenant-suppliers.page').then(m => m.TenantSuppliersPage), data: { layoutKey: 'tenant' } },
       { path: 'purchases', loadComponent: () => import('./pages/tenant/purchases/tenant-purchases.page').then(m => m.TenantPurchasesPage), data: { layoutKey: 'tenant' } },
-      { path: 'expenses', loadComponent: () => import('./pages/tenant/finance/tenant-expenses.page').then(m => m.TenantExpensesPage), data: { layoutKey: 'tenant' } },
+      { path: 'finance', loadComponent: () => import('./pages/tenant/finance/tenant-finance.page').then(m => m.TenantFinancePage), data: { layoutKey: 'tenant' } },
       { path: 'pos', loadComponent: () => import('./pages/tenant/pos/pos.page').then(m => m.TenantPosPage), data: { layoutKey: 'tenant' } }
     ]
   },

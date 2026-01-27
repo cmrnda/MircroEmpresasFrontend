@@ -1,6 +1,12 @@
 import { Injectable, signal } from '@angular/core';
 import { catchError, finalize, of, tap } from 'rxjs';
-import { CreateTenantSupplierRequest, ListTenantSuppliersResponse, TenantSupplier, TenantSuppliersApi, UpdateTenantSupplierRequest } from './tenant-suppliers.api';
+import {
+  CreateTenantSupplierRequest,
+  ListTenantSuppliersResponse,
+  TenantSupplier,
+  TenantSuppliersApi,
+  UpdateTenantSupplierRequest
+} from './tenant-suppliers.api';
 
 @Injectable({ providedIn: 'root' })
 export class TenantSuppliersFacade {
@@ -71,6 +77,51 @@ export class TenantSuppliersFacade {
     return this._api.restore(proveedorId).pipe(
       catchError(err => {
         this.error.set(err?.error?.error ?? 'restore_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
+  }
+
+  // ✅ productos del proveedor (para “vinculados”)
+  public listSupplierProducts(proveedorId: number, opts?: { q?: string; limit?: number; offset?: number }) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return this._api.listProducts({
+      proveedorId,
+      q: opts?.q,
+      limit: opts?.limit ?? 500,
+      offset: opts?.offset ?? 0
+    }).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'supplier_products_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
+  }
+
+  public linkProduct(proveedorId: number, productoId: number) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return this._api.linkProduct(proveedorId, productoId).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'link_failed');
+        return of(null);
+      }),
+      finalize(() => this.loading.set(false))
+    );
+  }
+
+  public unlinkProduct(proveedorId: number, productoId: number) {
+    this.loading.set(true);
+    this.error.set(null);
+
+    return this._api.unlinkProduct(proveedorId, productoId).pipe(
+      catchError(err => {
+        this.error.set(err?.error?.error ?? 'unlink_failed');
         return of(null);
       }),
       finalize(() => this.loading.set(false))

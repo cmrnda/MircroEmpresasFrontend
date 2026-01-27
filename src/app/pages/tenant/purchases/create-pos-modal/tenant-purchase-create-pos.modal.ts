@@ -36,7 +36,7 @@ export class TenantPurchaseCreatePosModalComponent {
   public readonly suppliers = signal<TenantSupplier[]>([]);
   public readonly products = signal<TenantProduct[]>([]);
   public readonly q = signal('');
-
+  public readonly productsLoading = signal(false);
   public readonly cart = signal<CartItem[]>([]);
 
   public readonly form = this._fb.group({
@@ -63,9 +63,48 @@ export class TenantPurchaseCreatePosModalComponent {
   });
 
   public constructor() {
-    this._supApi.list({ includeInactivos: false }).subscribe(res => this.suppliers.set(res.items ?? []));
-    this._prodApi.list({ includeInactivos: true }).subscribe(res => this.products.set(res.items ?? []));
-  }
+  // cargar proveedores
+  this._supApi.list({ includeInactivos: false }).subscribe(res => this.suppliers.set(res.items ?? []));
+
+  // cuando el usuario selecciona proveedor -> recargar productos
+  this.form.controls.proveedor_id.valueChanges.subscribe((pid) => {
+    // opcional pero recomendado: evita mezclar productos de otro proveedor en la compra
+    this.clearCart();
+
+    const proveedor_id = Number(pid ?? 0);
+    if (!proveedor_id) {
+      this.products.set([]); // si no hay proveedor, no mostramos productos
+      return;
+    }
+
+    this.loadProductsBySupplier(proveedor_id);
+  });
+}
+private loadProductsBySupplier(proveedorId: number): void {
+  this.productsLoading.set(true);
+  this.error.set(null);
+
+  this._supApi.listProducts({
+    proveedorId,
+    q: (this.q() || '').trim() || undefined,
+    limit: 500,
+    offset: 0,
+  }).subscribe({
+    next: (res) => {
+      const items = res?.data?.items ?? [];
+      // backend: items: [{ producto: {...}, proveedores: [...] }]
+      const prods = items.map((x: any) => x?.producto).filter(Boolean);
+      this.products.set(prods);
+    },
+    error: () => {
+      this.products.set([]);
+      this.error.set('No se pudo cargar productos del proveedor');
+    },
+    complete: () => this.productsLoading.set(false),
+  });
+}
+
+
 
   public close(): void {
     this.closed.emit();

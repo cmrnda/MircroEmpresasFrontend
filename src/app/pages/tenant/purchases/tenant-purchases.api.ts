@@ -2,6 +2,25 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClientService } from '../../../core/http/api-client.service';
 
+export type PurchaseSupplier = {
+  proveedor_id: number;
+  empresa_id: number;
+  nombre: string;
+  nit?: string | null;
+  telefono?: string | null;
+  direccion?: string | null;
+  email?: string | null;
+};
+
+export type PurchaseProduct = {
+  producto_id: number;
+  empresa_id: number;
+  categoria_id: number;
+  codigo: string;
+  descripcion: string;
+  image_url?: string | null;
+};
+
 export type PurchaseDetail = {
   compra_detalle_id: number;
   empresa_id: number;
@@ -12,6 +31,7 @@ export type PurchaseDetail = {
   subtotal: number;
   lote?: string | null;
   fecha_vencimiento?: string | null;
+  producto?: PurchaseProduct | null;
 };
 
 export type TenantPurchase = {
@@ -24,6 +44,7 @@ export type TenantPurchase = {
   observacion?: string | null;
   recibido_por_usuario_id?: number | null;
   recibido_en?: string | null;
+  proveedor?: PurchaseSupplier | null;
   detalle?: PurchaseDetail[];
 };
 

@@ -11,23 +11,32 @@
 
       <div class="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <div class="text-2xl font-semibold text-slate-900">Compras</div>
-        <div class="text-sm text-slate-500">Registra compras y aplica stock al recibir</div>
+        <div class="text-sm text-slate-500">Historial y recepcion</div>
       </div>
 
       <div class="mt-2 flex flex-wrap items-center gap-2">
         <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
           <span class="material-symbols-outlined text-base text-slate-500">inventory_2</span>
-          Recibir = suma al stock
+          Receive = add to stock
         </span>
 
         <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
           <span class="material-symbols-outlined text-base text-slate-500">history</span>
-          Historial: {{ items().length }}
+          Items: {{ items().length }}
         </span>
       </div>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
+      <button
+        (click)="openCreate()"
+        class="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+        type="button"
+      >
+        <span class="material-symbols-outlined text-base">receipt_long</span>
+        Nueva compra
+      </button>
+
       <button
         (click)="reload()"
         [disabled]="loading()"
@@ -40,336 +49,123 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
-    <div class="lg:col-span-5 lg:sticky lg:top-24 self-start space-y-4">
-      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-white">
-                <span class="material-symbols-outlined text-base">receipt_long</span>
-              </span>
-              <div class="text-lg font-semibold text-slate-900">Nueva compra</div>
-            </div>
-            <div class="mt-1 text-sm text-slate-500">Paso 1: proveedor y observacion</div>
-          </div>
-
-          <div class="text-right">
-            <div class="text-xs text-slate-500">Total actual</div>
-            <div class="text-lg font-semibold text-slate-900">{{ totalDraft() }}</div>
-          </div>
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <div class="px-4 py-4 border-b border-slate-200">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div class="text-lg font-semibold text-slate-900">Historial</div>
+          <div class="text-sm text-slate-500">Filtra por proveedor o estado</div>
         </div>
 
-        <form [formGroup]="form" class="mt-4 space-y-3">
-          <div class="space-y-1">
-            <label class="text-sm font-medium text-slate-700">Proveedor</label>
-
-            <div class="relative">
-              <select
-                class="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                formControlName="proveedor_id"
-              >
-                <option [ngValue]="null">Seleccionar proveedor</option>
-                <option *ngFor="let s of suppliers()" [ngValue]="s.proveedor_id">{{ s.nombre }}</option>
-              </select>
-              <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">expand_more</span>
-            </div>
-
-            <div class="text-xs text-slate-500">Requerido para crear la compra</div>
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-sm font-medium text-slate-700">Observacion</label>
-            <textarea
-              class="min-h-[84px] w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-              formControlName="observacion"
-              placeholder="Ej: Compra por reposicion semanal, factura pendiente..."
-            ></textarea>
-            <div class="text-xs text-slate-500">Opcional. Se guarda en el historial.</div>
-          </div>
-        </form>
-      </div>
-
-      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-900">
-                <span class="material-symbols-outlined text-base">playlist_add</span>
-              </span>
-              <div class="text-lg font-semibold text-slate-900">Detalle</div>
-            </div>
-            <div class="mt-1 text-sm text-slate-500">Paso 2: agrega items a la compra</div>
-          </div>
-
-          <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
-            <span class="material-symbols-outlined text-base text-slate-500">shopping_cart</span>
-            Items: {{ draftItems().length }}
-          </span>
-        </div>
-
-        <div class="mt-3 space-y-3">
-          <div class="relative">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
-            <input
-              (input)="productPickerQ.set(($any($event.target)).value)"
-              [value]="productPickerQ()"
-              class="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-              placeholder="Buscar producto por codigo o descripcion"
-              type="text"
-            />
-          </div>
-
-          <form [formGroup]="itemForm" class="space-y-2">
-            <div class="space-y-1">
-              <label class="text-sm font-medium text-slate-700">Producto</label>
-              <div class="relative">
-                <select
-                  class="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                  formControlName="producto_id"
-                >
-                  <option [ngValue]="null">Seleccionar producto</option>
-                  <option *ngFor="let p of productOptions()" [ngValue]="p.producto_id">{{ p.codigo }} - {{ p.descripcion }}</option>
-                </select>
-                <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-base">expand_more</span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <div class="space-y-1">
-                <label class="text-sm font-medium text-slate-700">Cantidad</label>
-                <input
-                  class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                  formControlName="cantidad"
-                  type="number"
-                  step="0.001"
-                  placeholder="0.000"
-                />
-              </div>
-
-              <div class="space-y-1">
-                <label class="text-sm font-medium text-slate-700">Costo unit</label>
-                <input
-                  class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                  formControlName="costo_unit"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div class="flex items-end">
-                <button
-                  (click)="addItem()"
-                  [disabled]="itemForm.invalid"
-                  class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
-                  type="button"
-                >
-                  <span class="material-symbols-outlined text-base">add</span>
-                  Agregar item
-                </button>
-              </div>
-            </div>
-          </form>
-
-          <div class="rounded-xl border border-slate-200 overflow-hidden">
-            <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2">
-              <div class="text-sm font-semibold text-slate-800">Items agregados</div>
-              <div class="text-sm font-semibold text-slate-900">Total: {{ totalDraft() }}</div>
-            </div>
-
-            <table class="w-full text-sm">
-              <thead class="bg-white text-slate-600">
-              <tr class="border-b border-slate-200">
-                <th class="px-3 py-2 text-left">Producto</th>
-                <th class="px-3 py-2 text-right">Cant</th>
-                <th class="px-3 py-2 text-right">Costo</th>
-                <th class="px-3 py-2 text-right">Sub</th>
-                <th class="px-3 py-2 text-right"></th>
-              </tr>
-              </thead>
-
-              <tbody class="divide-y">
-              <tr *ngFor="let d of draftItems(); let i = index" class="hover:bg-slate-50">
-                <td class="px-3 py-2">
-                  <div class="font-medium text-slate-900">{{ d.descripcion }}</div>
-                  <div class="text-xs text-slate-500">#{{ d.producto_id }}</div>
-                </td>
-                <td class="px-3 py-2 text-right text-slate-700 tabular-nums">{{ d.cantidad }}</td>
-                <td class="px-3 py-2 text-right text-slate-700 tabular-nums">{{ d.costo_unit }}</td>
-                <td class="px-3 py-2 text-right text-slate-700 tabular-nums">{{ d.subtotal }}</td>
-                <td class="px-3 py-2 text-right">
-                  <button
-                    (click)="removeItem(i)"
-                    class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs hover:bg-slate-50"
-                    type="button"
-                    title="Quitar"
-                  >
-                    <span class="material-symbols-outlined text-base">close</span>
-                  </button>
-                </td>
-              </tr>
-
-              <tr *ngIf="draftItems().length === 0">
-                <td class="px-3 py-8 text-center text-slate-500" colspan="5">
-                  <div class="mx-auto flex max-w-xs flex-col items-center gap-2">
-                    <span class="material-symbols-outlined text-3xl text-slate-300">inbox</span>
-                    <div class="text-sm font-medium text-slate-600">Sin items</div>
-                    <div class="text-xs text-slate-500">Busca un producto, ingresa cantidad y costo, y presiona "Agregar item"</div>
-                  </div>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button
-            (click)="createPurchase()"
-            [disabled]="loading() || form.invalid || draftItems().length === 0"
-            class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
-            type="button"
+        <div class="w-full sm:w-auto grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
+          <select
+            (ngModelChange)="filterSupplierId.set($event); reload()"
+            [ngModel]="filterSupplierId()"
+            class="w-full sm:w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
           >
-            <span class="material-symbols-outlined text-base">save</span>
-            Crear compra
-          </button>
+            <option [ngValue]="null">All suppliers</option>
+            <option *ngFor="let s of suppliers()" [ngValue]="s.proveedor_id">{{ s.nombre }}</option>
+          </select>
 
-          <div *ngIf="error()" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {{ error() }}
-          </div>
+          <select
+            (ngModelChange)="filterEstado.set($event); reload()"
+            [ngModel]="filterEstado()"
+            class="w-full sm:w-44 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+          >
+            <option [ngValue]="null">All</option>
+            <option [ngValue]="'CREADA'">CREADA</option>
+            <option [ngValue]="'RECIBIDA'">RECIBIDA</option>
+            <option [ngValue]="'ANULADA'">ANULADA</option>
+          </select>
         </div>
       </div>
     </div>
 
-    <div class="lg:col-span-7 min-w-0">
-      <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div class="px-4 py-4 border-b border-slate-200">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <div class="text-lg font-semibold text-slate-900">Historial</div>
-              <div class="text-sm text-slate-500">Filtra por proveedor o estado</div>
-            </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[920px]">
+        <thead class="bg-slate-50 text-slate-600">
+        <tr>
+          <th class="px-4 py-3 text-left">ID</th>
+          <th class="px-4 py-3 text-left">Supplier</th>
+          <th class="px-4 py-3 text-left">Date</th>
+          <th class="px-4 py-3 text-right">Total</th>
+          <th class="px-4 py-3 text-left">Status</th>
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+        </thead>
 
-            <div class="w-full sm:w-auto grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end">
-              <select
-                (ngModelChange)="filterSupplierId.set($event); reload()"
-                [ngModel]="filterSupplierId()"
-                class="w-full sm:w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+        <tbody class="divide-y">
+        <tr *ngFor="let c of items()" class="hover:bg-slate-50">
+          <td class="px-4 py-3 text-slate-700 tabular-nums">{{ c.compra_id }}</td>
+
+          <td class="px-4 py-3">
+            <div class="font-medium text-slate-900">{{ supplierNameFromRow(c) }}</div>
+            <div class="text-xs text-slate-500">#{{ c.proveedor_id }}</div>
+          </td>
+
+          <td class="px-4 py-3 text-slate-700 tabular-nums">{{ c.fecha_hora }}</td>
+
+          <td class="px-4 py-3 text-right text-slate-900 font-semibold tabular-nums">{{ c.total }}</td>
+
+          <td class="px-4 py-3">
+              <span [ngClass]="estadoBadgeClass(c.estado)" class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium">
+                {{ c.estado }}
+              </span>
+          </td>
+
+          <td class="px-4 py-3 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <button
+                (click)="openDetail(c.compra_id)"
+                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+                type="button"
               >
-                <option [ngValue]="null">Todos los proveedores</option>
-                <option *ngFor="let s of suppliers()" [ngValue]="s.proveedor_id">{{ s.nombre }}</option>
-              </select>
+                <span class="material-symbols-outlined text-base">visibility</span>
+                View
+              </button>
 
-              <select
-                (ngModelChange)="filterEstado.set($event); reload()"
-                [ngModel]="filterEstado()"
-                class="w-full sm:w-44 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              <button
+                *ngIf="c.estado === 'CREADA'"
+                (click)="receive(c.compra_id)"
+                class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                type="button"
               >
-                <option [ngValue]="null">Todos</option>
-                <option [ngValue]="'CREADA'">CREADA</option>
-                <option [ngValue]="'RECIBIDA'">RECIBIDA</option>
-                <option [ngValue]="'ANULADA'">ANULADA</option>
-              </select>
+                <span class="material-symbols-outlined text-base">done</span>
+                Receive
+              </button>
+
+              <button
+                *ngIf="c.estado === 'CREADA'"
+                (click)="cancel(c.compra_id)"
+                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
+                type="button"
+              >
+                <span class="material-symbols-outlined text-base">close</span>
+                Cancel
+              </button>
             </div>
-          </div>
-        </div>
+          </td>
+        </tr>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm min-w-[920px]">
-            <thead class="bg-slate-50 text-slate-600">
-            <tr>
-              <th class="px-4 py-3 text-left">ID</th>
-              <th class="px-4 py-3 text-left">Proveedor</th>
-              <th class="px-4 py-3 text-left">Fecha</th>
-              <th class="px-4 py-3 text-right">Total</th>
-              <th class="px-4 py-3 text-left">Estado</th>
-              <th class="px-4 py-3 text-right">Acciones</th>
-            </tr>
-            </thead>
-
-            <tbody class="divide-y">
-            <tr *ngFor="let c of items()" class="hover:bg-slate-50">
-              <td class="px-4 py-3 text-slate-700 tabular-nums">{{ c.compra_id }}</td>
-
-              <td class="px-4 py-3">
-                <div class="font-medium text-slate-900">{{ supplierName(c.proveedor_id) }}</div>
-                <div class="text-xs text-slate-500">#{{ c.proveedor_id }}</div>
-              </td>
-
-              <td class="px-4 py-3 text-slate-700 tabular-nums">{{ c.fecha_hora }}</td>
-
-              <td class="px-4 py-3 text-right text-slate-900 font-semibold tabular-nums">{{ c.total }}</td>
-
-              <td class="px-4 py-3">
-                  <span [ngClass]="estadoBadgeClass(c.estado)" class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium">
-                    {{ c.estado }}
-                  </span>
-              </td>
-
-              <td class="px-4 py-3 text-right">
-                <div class="flex items-center justify-end gap-2">
-                  <button
-                    (click)="openDetail(c.compra_id)"
-                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
-                    type="button"
-                  >
-                    <span class="material-symbols-outlined text-base">visibility</span>
-                    Ver
-                  </button>
-
-                  <button
-                    *ngIf="c.estado === 'CREADA'"
-                    (click)="receive(c.compra_id)"
-                    class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
-                    type="button"
-                  >
-                    <span class="material-symbols-outlined text-base">done</span>
-                    Recibir
-                  </button>
-
-                  <button
-                    *ngIf="c.estado === 'CREADA'"
-                    (click)="cancel(c.compra_id)"
-                    class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs hover:bg-slate-50"
-                    type="button"
-                  >
-                    <span class="material-symbols-outlined text-base">close</span>
-                    Anular
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <tr *ngIf="items().length === 0">
-              <td class="px-4 py-10 text-center text-slate-500" colspan="6">
-                <div class="mx-auto flex max-w-sm flex-col items-center gap-2">
-                  <span class="material-symbols-outlined text-3xl text-slate-300">search_off</span>
-                  <div class="text-sm font-medium text-slate-600">Sin resultados</div>
-                  <div class="text-xs text-slate-500">Prueba cambiando los filtros o crea una nueva compra</div>
-                </div>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div class="text-sm text-slate-600">
-            Regla: al presionar <span class="font-semibold">Recibir</span> se suma la cantidad al stock del producto.
-          </div>
-          <div class="text-xs text-slate-500">
-            Estados: <span class="font-medium">CREADA</span>, <span class="font-medium">RECIBIDA</span>, <span class="font-medium">ANULADA</span>
-          </div>
-        </div>
-      </div>
+        <tr *ngIf="items().length === 0">
+          <td class="px-4 py-10 text-center text-slate-500" colspan="6">
+            Sin resultados
+          </td>
+        </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
 
+<app-tenant-purchase-create-pos-modal
+  *ngIf="createOpen()"
+  (closed)="closeCreate()"
+  (created)="onCreated()"
+></app-tenant-purchase-create-pos-modal>
+
 <app-tenant-purchase-detail-modal
   *ngIf="detailOpen() && detailCompraId()"
   [compraId]="detailCompraId()!"
-  [products]="products()"
   (closed)="closeDetail()"
 ></app-tenant-purchase-detail-modal>

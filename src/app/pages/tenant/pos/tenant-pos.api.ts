@@ -156,4 +156,8 @@ export class TenantPosApi {
   public createSale(empresa_id: number, payload: PosCreateSalePayload): Observable<PosCreateSaleResponse> {
     return this._api.post<PosCreateSaleResponse>(`/tenant/pos/${empresa_id}/sales`, payload);
   }
+  public downloadReceipt(ventaId: number) {
+    return this._api.getBlob(`/tenant/pos/sales/${encodeURIComponent(String(ventaId))}/receipt.pdf`);
+  }
+
 }

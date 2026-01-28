@@ -35,4 +35,24 @@ export class TenantPosPage {
     const x = Number(n || 0);
     return String(x.toFixed(2));
   }
+  public downloadReceipt(): void {
+  const ventaId = Number(this.vm.successVentaId() ?? 0);
+  if (!Number.isFinite(ventaId) || ventaId <= 0) return;
+
+  this.vm.downloadReceipt(ventaId).subscribe({
+    next: (blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `recibo_venta_${ventaId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    error: () => {
+      // opcional: muestra un error bonito si quieres
+      // console.error('receipt_failed');
+      }
+    });
+  }
 }

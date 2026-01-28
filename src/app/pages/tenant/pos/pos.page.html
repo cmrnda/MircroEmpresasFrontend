@@ -474,6 +474,16 @@
             <span class="material-symbols-outlined text-[18px]">point_of_sale</span>
             {{ vm.placing() ? 'Registrando...' : 'Confirmar venta' }}
           </button>
+          <button
+           *ngIf="vm.successVentaId()"
+            (click)="downloadReceipt()"
+            class="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-slate-50"
+            type="button"
+          >
+  <span class="material-symbols-outlined text-[18px]">download</span>
+  Descargar recibo (PDF)
+</button>
+
 
           <div *ngIf="vm.placeError()" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {{ vm.placeError() }}

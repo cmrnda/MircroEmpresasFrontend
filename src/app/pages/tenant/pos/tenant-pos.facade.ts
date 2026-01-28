@@ -72,7 +72,9 @@ export class TenantPosFacade {
     const m = toMoney(p.monto);
     return Math.max(0, m - t);
   });
-
+  public downloadReceipt(ventaId: number) {
+  return this._api.downloadReceipt(ventaId);
+}
   public readonly placing = signal(false);
   public readonly placeError = signal<string | null>(null);
   public readonly successVentaId = signal<number | null>(null);

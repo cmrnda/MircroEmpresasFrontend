@@ -2,11 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TenantProduct } from '../../tenant-products.api';
 import { Category } from '../../tenant-products.page';
+import { ProductSuppliersModalComponent } from '../product-suppliers-modal/product-suppliers-modal.component';
 
 @Component({
   standalone: true,
   selector: 'app-products-table',
-  imports: [CommonModule],
+  imports: [CommonModule, ProductSuppliersModalComponent],
   templateUrl: './products-table.component.html'
 })
 export class ProductsTableComponent {
@@ -27,6 +28,25 @@ export class ProductsTableComponent {
   @Output() public image = new EventEmitter<TenantProduct>();
   @Output() public remove = new EventEmitter<number>();
   @Output() public restore = new EventEmitter<number>();
+
+  // ✅ modal proveedores
+  public suppliersOpen = false;
+  public suppliersProduct: TenantProduct | null = null;
+
+  public openSuppliers(p: TenantProduct): void {
+    this.suppliersProduct = p;
+    this.suppliersOpen = true;
+  }
+
+  public closeSuppliers(): void {
+    this.suppliersOpen = false;
+    this.suppliersProduct = null;
+  }
+
+  public onSuppliersSaved(): void {
+    // opcional: recargar productos si quieres
+    // this.reload.emit();
+  }
 
   public catName(id: number): string {
     const c = this.categories.find(x => x.categoria_id === id);

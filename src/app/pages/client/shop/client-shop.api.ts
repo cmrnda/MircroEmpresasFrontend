@@ -37,6 +37,7 @@ export type CreateOrderItem = {
 export type CreateOrderPayload = {
   items: CreateOrderItem[];
   descuento_total?: number | null;
+
   envio_departamento?: string | null;
   envio_ciudad?: string | null;
   envio_zona_barrio?: string | null;
@@ -104,16 +105,17 @@ export class ClientShopApi {
     const qs = params.length ? `?${params.join('&')}` : '';
 
     return this._api.get<PublicProductsResponse>(`/shop/${empresa_id}/products${qs}`).pipe(
-      map((res) => {
-        const items = (res?.items || []).filter((p) => (p?.cantidad_actual ?? 0) > 0);
-        return {
-          items,
-          page: Number(res?.page ?? 1),
-          page_size: Number(res?.page_size ?? (opts?.pageSize ?? 20)),
-          total: Number(res?.total ?? items.length)
-        };
-      })
-    );
+    map((res) => {
+      const items = (res?.items || []);
+      return {
+        items,
+        page: Number(res?.page ?? 1),
+        page_size: Number(res?.page_size ?? (opts?.pageSize ?? 20)),
+        total: Number(res?.total ?? items.length)
+      };
+    })
+);
+
   }
 
   public getProduct(empresa_id: number, producto_id: number): Observable<ShopProduct> {

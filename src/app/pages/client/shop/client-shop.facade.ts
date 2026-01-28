@@ -110,7 +110,7 @@ export class ClientShopFacade {
   }
 
   public imageUrl(p: ShopProduct): string | null {
-    return this.normalizeImageUrl(p?.primary_image_url ?? null);
+    return this.normalizeImageUrl((p as any)?.primary_image_url ?? null);
   }
 
   public normalizeImageUrl(u: string | null): string | null {

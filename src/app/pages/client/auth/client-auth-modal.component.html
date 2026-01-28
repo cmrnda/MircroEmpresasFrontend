@@ -1,0 +1,159 @@
+<div *ngIf="open" class="fixed inset-0 z-[70]">
+  <div class="absolute inset-0 bg-black/40" (click)="close()"></div>
+
+  <div class="absolute inset-0 grid place-items-center p-4">
+    <div
+      class="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden"
+      (click)="stop($event)"
+    >
+      <div class="px-5 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="text-sm text-slate-500">Cliente</div>
+          <div class="text-lg font-semibold text-slate-900">
+            {{ tab() === 'login' ? 'Iniciar sesion' : 'Crear cuenta' }}
+          </div>
+          <div class="text-xs text-slate-500">Empresa ID: {{ empresaId ?? '-' }}</div>
+        </div>
+
+        <button
+          type="button"
+          class="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 hover:bg-slate-50"
+          (click)="close()"
+          aria-label="Cerrar"
+        >
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            class="rounded-xl border px-3 py-2 text-sm font-semibold"
+            [class.border-slate-900]="tab() === 'login'"
+            [class.bg-slate-900]="tab() === 'login'"
+            [class.text-white]="tab() === 'login'"
+            [class.border-slate-200]="tab() !== 'login'"
+            [class.bg-white]="tab() !== 'login'"
+            (click)="setTab('login')"
+          >
+            Login
+          </button>
+
+          <button
+            type="button"
+            class="rounded-xl border px-3 py-2 text-sm font-semibold"
+            [class.border-slate-900]="tab() === 'register'"
+            [class.bg-slate-900]="tab() === 'register'"
+            [class.text-white]="tab() === 'register'"
+            [class.border-slate-200]="tab() !== 'register'"
+            [class.bg-white]="tab() !== 'register'"
+            (click)="setTab('register')"
+          >
+            Registro
+          </button>
+        </div>
+
+        <div *ngIf="error()" class="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+          {{ labelErr(error()!) }}
+        </div>
+
+        <form *ngIf="tab() === 'login'" [formGroup]="loginForm" class="space-y-3">
+          <label class="block">
+            <div class="text-xs font-medium text-slate-600">Correo</div>
+            <input
+              formControlName="email"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+              placeholder="correo@correo.com"
+              autocomplete="email"
+            />
+          </label>
+
+          <label class="block">
+            <div class="text-xs font-medium text-slate-600">Contrasena</div>
+            <input
+              type="password"
+              formControlName="password"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+              placeholder="********"
+              autocomplete="current-password"
+            />
+          </label>
+        </form>
+
+        <form *ngIf="tab() === 'register'" [formGroup]="registerForm" class="space-y-3">
+          <label class="block">
+            <div class="text-xs font-medium text-slate-600">Nombre o razon social</div>
+            <input
+              formControlName="nombre_razon"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+              placeholder="Mi tienda / Mi nombre"
+              autocomplete="name"
+            />
+          </label>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <label class="block">
+              <div class="text-xs font-medium text-slate-600">NIT o CI (opcional)</div>
+              <input
+                formControlName="nit_ci"
+                class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+                placeholder="1234567"
+              />
+            </label>
+
+            <label class="block">
+              <div class="text-xs font-medium text-slate-600">Telefono (opcional)</div>
+              <input
+                formControlName="telefono"
+                class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+                placeholder="70000000"
+              />
+            </label>
+          </div>
+
+          <label class="block">
+            <div class="text-xs font-medium text-slate-600">Correo</div>
+            <input
+              formControlName="email"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+              placeholder="correo@correo.com"
+              autocomplete="email"
+            />
+          </label>
+
+          <label class="block">
+            <div class="text-xs font-medium text-slate-600">Contrasena</div>
+            <input
+              type="password"
+              formControlName="password"
+              class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-slate-400"
+              placeholder="********"
+              autocomplete="new-password"
+            />
+          </label>
+        </form>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm hover:bg-slate-50"
+            (click)="close()"
+            [disabled]="loading()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-xl bg-slate-900 text-white px-4 py-2 text-sm hover:bg-slate-800 disabled:opacity-50"
+            (click)="submit()"
+            [disabled]="!canSubmit()"
+          >
+            {{ loading() ? 'Procesando...' : (tab() === 'login' ? 'Entrar' : 'Crear cuenta') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -77,6 +77,7 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
     brand: { icon: 'store', title: 'Tenant', subtitle: 'Tenant' },
     maxWidthClass: 'max-w-7xl',
     nav: [
+      { label: 'Dashboard', icon: 'dashboard', link: '/tenant/dashboard', exact: true },
       { label: 'Productos', icon: 'shopping_bag', link: '/tenant/products', exact: true },
       { label: 'Categorias', icon: 'category', link: '/tenant/categories', exact: true },
       { label: 'Pedidos', icon: 'receipt_long', link: '/tenant/orders', exact: true },
@@ -90,14 +91,15 @@ export const LAYOUTS: Record<string, LayoutConfig> = {
       { label: 'Mi password', icon: 'lock', link: '/account/password', exact: true }
     ],
     mobileNav: [
+      { label: 'Dash', icon: 'dashboard', link: '/tenant/dashboard', exact: true },
       { label: 'Prod', icon: 'shopping_bag', link: '/tenant/products', exact: true },
       { label: 'Cat', icon: 'category', link: '/tenant/categories', exact: true },
       { label: 'Prov', icon: 'local_shipping', link: '/tenant/suppliers', exact: true },
-      { label: 'Comp', icon: 'shopping_cart', link: '/tenant/purchases', exact: true },
-      { label: 'Gast', icon: 'account_balance_wallet', link: '/tenant/finance', exact: true }
+      { label: 'Comp', icon: 'shopping_cart', link: '/tenant/purchases', exact: true }
     ],
     titles: {
       rules: [
+        { prefix: '/tenant/dashboard', title: 'Dashboard' },
         { prefix: '/tenant/products', title: 'Productos' },
         { prefix: '/tenant/categories', title: 'Categorias' },
         { prefix: '/tenant/orders', title: 'Pedidos' },

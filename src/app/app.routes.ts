@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard, typeGuard } from './core/auth/guards';
 import { LoginPage } from './auth/login.page';
 import { TenantsPage } from './pages/platform/tenant/tenants.page';
-import {AppLayoutComponent} from './layout/app-layout.component';
+import { AppLayoutComponent } from './layout/app-layout.component';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login/platform' },
@@ -29,7 +29,10 @@ export const routes: Routes = [
     component: AppLayoutComponent,
     data: { layoutKey: 'tenant' },
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'products' },
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+
+      { path: 'dashboard', loadComponent: () => import('./pages/tenant/dashboard/tenant-dashboard.page').then(m => m.TenantDashboardPage), data: { layoutKey: 'tenant' } },
+
       { path: 'users', loadComponent: () => import('./pages/tenant/users/tenant-users.page').then(m => m.TenantUsersPage), data: { layoutKey: 'tenant' } },
       { path: 'clients', loadComponent: () => import('./pages/tenant/clients/tenant-clients.page').then(m => m.TenantClientsPage), data: { layoutKey: 'tenant' } },
       { path: 'categories', loadComponent: () => import('./pages/tenant/categories/tenant-categories.page').then(m => m.TenantCategoriesPage), data: { layoutKey: 'tenant' } },

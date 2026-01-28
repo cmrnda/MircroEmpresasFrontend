@@ -6,9 +6,23 @@ import { Observable } from 'rxjs';
 type HeadersDict = Record<string, string>;
 type QueryDict = Record<string, string | number | boolean | null | undefined>;
 
+function trimSlashEnd(s: string): string {
+  return s.replace(/\/+$/, '');
+}
+
+function resolveApiBaseUrl(): string {
+  const fromEnv = (environment.apiBaseUrl || '').trim();
+  if (fromEnv) return trimSlashEnd(fromEnv);
+
+  const host = window.location.hostname || 'localhost';
+  const proto = window.location.protocol === 'https:' ? 'https' : 'http';
+
+  return `${proto}://${host}:5000`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiClientService {
-  private readonly _base = environment.apiBaseUrl;
+  private readonly _base = resolveApiBaseUrl();
 
   public constructor(private readonly _http: HttpClient) {}
 

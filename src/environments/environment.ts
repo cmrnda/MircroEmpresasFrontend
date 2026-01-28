@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'http://127.0.0.1:5000'
+  apiBaseUrl: 'http://192.168.1.24:5000',  // IP de tu PC en la red local
 };

@@ -1,8 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
-
-const BASE = 'http://127.0.0.1:5000';
+import {ApiClientService} from '../http/api-client.service'; // Importar ApiClientService
 
 export type PlatformLoginResponse = {
   access_token: string;
@@ -36,25 +34,25 @@ export type ClientLoginResponse = {
 
 @Injectable({ providedIn: 'root' })
 export class AuthApi {
-  public constructor(private readonly _http: HttpClient) {}
+  public constructor(private readonly _api: ApiClientService) {}
 
   public loginPlatform(payload: { email: string; password: string }): Observable<PlatformLoginResponse> {
-    return this._http.post<PlatformLoginResponse>(`${BASE}/auth/platform/login`, payload);
+    return this._api.post<PlatformLoginResponse>('/auth/platform/login', payload);
   }
 
   public loginTenant(payload: { email: string; password: string; empresa_id: number }): Observable<TenantLoginResponse> {
-    return this._http.post<TenantLoginResponse>(`${BASE}/auth/tenant/login`, payload);
+    return this._api.post<TenantLoginResponse>('/auth/tenant/login', payload);
   }
 
   public loginClient(payload: { email: string; password: string; empresa_id: number }): Observable<ClientLoginResponse> {
-    return this._http.post<ClientLoginResponse>(`${BASE}/auth/client/login`, payload);
+    return this._api.post<ClientLoginResponse>('/auth/client/login', payload);
   }
 
   public logout(): Observable<{ ok: boolean }> {
-    return this._http.post<{ ok: boolean }>(`${BASE}/auth/logout`, {});
+    return this._api.post<{ ok: boolean }>('/auth/logout', {});
   }
 
   public changeMyPassword(payload: { new_password: string }): Observable<{ ok: boolean }> {
-    return this._http.put<{ ok: boolean }>(`${BASE}/auth/me/password`, payload);
+    return this._api.put<{ ok: boolean }>('/auth/me/password', payload);
   }
 }

@@ -32,7 +32,9 @@
               "src/styles.css"
             ],
             "scripts": [],
-            "baseHref": "/"
+            "baseHref": "/",
+            "serviceWorker": true,
+            "ngswConfigPath": "ngsw-config.json"
           },
           "configurations": {
             "production": {

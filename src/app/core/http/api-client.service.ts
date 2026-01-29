@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
+import { Capacitor } from '@capacitor/core';
 
 type HeadersDict = Record<string, string>;
 type QueryDict = Record<string, string | number | boolean | null | undefined>;
@@ -14,9 +15,16 @@ function resolveApiBaseUrl(): string {
   const fromEnv = (environment.apiBaseUrl || '').trim();
   if (fromEnv) return trimSlashEnd(fromEnv);
 
+  // En Capacitor NO uses window.location para armar backend,
+  // porque termina en localhost del teléfono/emulador.
+  if (Capacitor.isNativePlatform()) {
+    // fallback por si olvidaste setear environment.apiBaseUrl
+    return 'http://10.0.2.2:5000';
+  }
+
+  // Web fallback (si corres en navegador)
   const host = window.location.hostname || 'localhost';
   const proto = window.location.protocol === 'https:' ? 'https' : 'http';
-
   return `${proto}://${host}:5000`;
 }
 

@@ -12,7 +12,6 @@ export type TenantProduct = {
   stock: number;
   stock_min: number;
   activo: boolean;
-
   image_url?: string | null;
   primary_image_url?: string | null;
   cantidad_actual?: number | null;
@@ -48,19 +47,21 @@ export class TenantProductsApi {
   public constructor(private readonly _api: ApiClientService) {}
 
   public list(opts?: { q?: string; categoriaId?: number; includeInactivos?: boolean }): Observable<ListTenantProductsResponse> {
-    const params: string[] = [];
-    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
-    if (opts?.categoriaId) params.push(`categoria_id=${encodeURIComponent(String(opts.categoriaId))}`);
-    if (opts?.includeInactivos) params.push('include_inactivos=true');
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<ListTenantProductsResponse>(`/tenant/products${qs}`);
+    return this._api.get<ListTenantProductsResponse>('/tenant/products', {
+      query: {
+        q: opts?.q,
+        categoria_id: opts?.categoriaId,
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public get(productoId: number, opts?: { includeInactivos?: boolean }): Observable<TenantProduct> {
-    const params: string[] = [];
-    if (opts?.includeInactivos) params.push('include_inactivos=true');
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<TenantProduct>(`/tenant/products/${productoId}${qs}`);
+    return this._api.get<TenantProduct>(`/tenant/products/${productoId}`, {
+      query: {
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public create(payload: CreateTenantProductRequest): Observable<TenantProduct> {

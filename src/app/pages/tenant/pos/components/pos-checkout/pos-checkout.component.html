@@ -1,0 +1,300 @@
+<div class="rounded-3xl border border-slate-200 bg-white shadow-sm p-5 xl:sticky xl:top-[84px] space-y-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Checkout</div>
+      <div class="mt-1 text-lg font-semibold text-slate-900">Cobro</div>
+    </div>
+
+    <div class="text-right">
+      <div class="text-xs text-slate-500">Total</div>
+      <div class="text-2xl font-semibold text-slate-900">{{ fmtFn(total) }}</div>
+    </div>
+  </div>
+
+  <details class="rounded-2xl border border-slate-200 bg-white overflow-hidden" open>
+    <summary class="cursor-pointer select-none px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-slate-600">receipt_long</span>
+        <span class="text-sm font-semibold text-slate-900">Ticket</span>
+      </div>
+      <span class="text-xs text-slate-600">
+        {{ ticketCount }} items · {{ fmtFn(ticketSubtotal) }}
+      </span>
+    </summary>
+
+    <div class="p-4 space-y-3">
+      <div *ngIf="ticketItems.length === 0" class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        Ticket vacío, agrega productos del catálogo.
+      </div>
+
+      <div *ngIf="ticketItems.length > 0" class="space-y-2">
+        <div *ngFor="let it of ticketItems" class="rounded-2xl border border-slate-200 bg-white p-3">
+          <div class="flex items-start gap-3">
+            <div class="h-12 w-12 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shrink-0">
+              <img *ngIf="it.primary_image_url" [src]="it.primary_image_url" class="h-full w-full object-cover" />
+              <div *ngIf="!it.primary_image_url" class="grid h-full w-full place-items-center text-slate-400">
+                <span class="material-symbols-outlined text-[20px]">image</span>
+              </div>
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <div class="truncate text-sm font-semibold text-slate-900">{{ it.descripcion }}</div>
+              <div class="mt-1 text-xs text-slate-500">
+                ID: <span class="font-semibold text-slate-700">#{{ it.producto_id }}</span>
+                <span *ngIf="it.max_qty !== null"> · Max: <span class="font-semibold text-slate-700">{{ it.max_qty }}</span></span>
+              </div>
+
+              <div class="mt-3 flex items-center justify-between gap-2">
+                <div>
+                  <div class="text-xs text-slate-500">Unitario</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ fmtFn(it.precio) }}</div>
+                </div>
+
+                <div class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1">
+                  <button type="button" class="grid h-9 w-9 place-items-center rounded-xl hover:bg-slate-50" (click)="dec.emit(it.producto_id)">
+                    <span class="material-symbols-outlined text-[18px]">remove</span>
+                  </button>
+
+                  <input
+                    class="w-16 bg-transparent text-center text-sm font-semibold outline-none"
+                    type="number"
+                    min="1"
+                    [attr.max]="it.max_qty !== null ? it.max_qty : null"
+                    [value]="it.qty"
+                    (change)="setQtySafe(it.producto_id, ($any($event.target)).value)"
+                  />
+
+                  <button type="button" class="grid h-9 w-9 place-items-center rounded-xl hover:bg-slate-50" (click)="inc.emit(it.producto_id)">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                  </button>
+                </div>
+
+                <div class="text-right">
+                  <div class="text-xs text-slate-500">Subtotal</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ fmtFn(it.precio * it.qty) }}</div>
+                </div>
+
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold hover:bg-slate-50"
+                  (click)="remove.emit(it.producto_id)"
+                >
+                  <span class="material-symbols-outlined text-[18px]">close</span>
+                  Quitar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="rounded-2xl border border-slate-200 bg-white overflow-hidden" [open]="clientMode !== 'idle'">
+    <summary class="cursor-pointer select-none px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-slate-600">person</span>
+        <span class="text-sm font-semibold text-slate-900">Cliente</span>
+      </div>
+      <span class="text-xs text-slate-600">{{ clientTitle() }}</span>
+    </summary>
+
+    <div class="p-4 space-y-3">
+      <div class="grid grid-cols-12 gap-2 items-center">
+        <div class="col-span-8">
+          <input
+            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+            placeholder="NIT o CI"
+            [value]="clientForm.nit_ci"
+            (input)="setClientField.emit({ key: 'nit_ci', value: ($any($event.target)).value })"
+            (keydown.enter)="lookupClient.emit()"
+          />
+        </div>
+        <div class="col-span-4">
+          <button
+            type="button"
+            class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+            (click)="lookupClient.emit()"
+            [disabled]="clientLoading"
+          >
+            <span class="material-symbols-outlined text-[18px]">search</span>
+            {{ clientLoading ? '...' : 'Buscar' }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="clientError" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        {{ clientError }}
+      </div>
+
+      <div *ngIf="clientMode === 'found'" class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Datos</div>
+        <div class="mt-2 text-sm font-semibold text-slate-900">{{ clientForm.nombre_razon }}</div>
+        <div class="mt-1 text-xs text-slate-600">
+          Tel: <span class="font-semibold text-slate-900">{{ clientForm.telefono || '-' }}</span>
+        </div>
+        <div class="mt-1 text-xs text-slate-600">
+          Email: <span class="font-semibold text-slate-900">{{ clientForm.email || '-' }}</span>
+        </div>
+
+        <button
+          type="button"
+          class="mt-3 inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold hover:bg-slate-50"
+          (click)="clearClient.emit()"
+        >
+          <span class="material-symbols-outlined text-[18px]">restart_alt</span>
+          Cambiar
+        </button>
+      </div>
+
+      <div *ngIf="clientMode === 'new'" class="space-y-3">
+        <input
+          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+          placeholder="Nombre o razón social"
+          [value]="clientForm.nombre_razon"
+          (input)="setClientField.emit({ key: 'nombre_razon', value: ($any($event.target)).value })"
+        />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input
+            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+            placeholder="Teléfono"
+            [value]="clientForm.telefono"
+            (input)="setClientField.emit({ key: 'telefono', value: ($any($event.target)).value })"
+          />
+          <input
+            class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+            placeholder="Email (opcional)"
+            [value]="clientForm.email"
+            (input)="setClientField.emit({ key: 'email', value: ($any($event.target)).value })"
+          />
+        </div>
+
+        <button
+          type="button"
+          class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+          (click)="createClient.emit()"
+          [disabled]="clientLoading"
+        >
+          <span class="material-symbols-outlined text-[18px]">person_add</span>
+          {{ clientLoading ? 'Guardando...' : 'Crear cliente' }}
+        </button>
+      </div>
+    </div>
+  </details>
+
+  <details class="rounded-2xl border border-slate-200 bg-white overflow-hidden" open>
+    <summary class="cursor-pointer select-none px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] text-slate-600">payments</span>
+        <span class="text-sm font-semibold text-slate-900">Pago</span>
+      </div>
+      <span class="text-xs text-slate-600">Cambio: {{ fmtFn(cambio) }}</span>
+    </summary>
+
+    <div class="p-4 space-y-3">
+      <select
+        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+        [value]="payment.metodo"
+        (change)="setPaymentField.emit({ key: 'metodo', value: ($any($event.target)).value })"
+      >
+        <option value="EFECTIVO">EFECTIVO</option>
+        <option value="QR">QR</option>
+        <option value="TARJETA">TARJETA</option>
+      </select>
+
+      <input
+        class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+        type="number"
+        min="0"
+        placeholder="Descuento total"
+        [value]="payment.descuento_total"
+        (change)="setPaymentField.emit({ key: 'descuento_total', value: ($any($event.target)).value })"
+      />
+
+      <div *ngIf="payment.metodo === 'EFECTIVO'" class="space-y-2">
+        <input
+          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+          type="number"
+          min="0"
+          placeholder="Monto recibido"
+          [value]="payment.monto"
+          (change)="setPaymentField.emit({ key: 'monto', value: ($any($event.target)).value })"
+        />
+        <div class="text-xs text-slate-600">
+          Cambio: <span class="font-semibold text-slate-900">{{ fmtFn(cambio) }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="payment.metodo === 'QR'" class="space-y-2">
+        <input
+          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+          placeholder="Referencia QR (opcional)"
+          [value]="payment.referencia_qr"
+          (input)="setPaymentField.emit({ key: 'referencia_qr', value: ($any($event.target)).value })"
+        />
+        <input
+          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+          type="number"
+          min="0"
+          placeholder="Monto (opcional)"
+          [value]="payment.monto"
+          (change)="setPaymentField.emit({ key: 'monto', value: ($any($event.target)).value })"
+        />
+      </div>
+
+      <div *ngIf="payment.metodo === 'TARJETA'">
+        <input
+          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
+          type="number"
+          min="0"
+          placeholder="Monto (opcional)"
+          [value]="payment.monto"
+          (change)="setPaymentField.emit({ key: 'monto', value: ($any($event.target)).value })"
+        />
+      </div>
+
+      <button
+        type="button"
+        class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+        (click)="confirmSale.emit()"
+        [disabled]="!saleReady()"
+      >
+        <span class="material-symbols-outlined text-[18px]">point_of_sale</span>
+        {{ placing ? 'Registrando...' : 'Confirmar venta' }}
+      </button>
+
+      <button
+        *ngIf="successVentaId"
+        type="button"
+        class="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-slate-50"
+        (click)="downloadReceipt.emit()"
+      >
+        <span class="material-symbols-outlined text-[18px]">download</span>
+        Descargar recibo (PDF)
+      </button>
+
+      <button
+        *ngIf="successVentaId"
+        type="button"
+        class="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-slate-50"
+        (click)="shareReceipt.emit()"
+      >
+        <span class="material-symbols-outlined text-[18px]">share</span>
+        Compartir PDF
+      </button>
+
+      <div *ngIf="placeError" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        {{ placeError }}
+      </div>
+
+      <div *ngIf="successVentaId" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        Venta creada: #{{ successVentaId }}
+      </div>
+    </div>
+  </details>
+
+  <div class="text-xs text-slate-500">
+    Tip: estilo súper simple: catálogo → ticket → cliente → pago → confirmar. Sin drama.
+  </div>
+</div>

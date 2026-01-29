@@ -8,7 +8,6 @@ export type TenantUser = {
   activo: boolean;
   creado_en?: string | null;
   ultimo_login?: string | null;
-
   empresa_id: number;
   membership_activo: boolean;
   roles: string[];
@@ -36,15 +35,16 @@ export class TenantUsersApi {
   public constructor(private readonly _api: ApiClientService) {}
 
   public list(opts?: { q?: string; includeInactivos?: boolean }): Observable<ListTenantUsersResponse> {
-    const params: string[] = [];
-    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
-    if (opts?.includeInactivos) params.push('include_inactivos=true');
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<ListTenantUsersResponse>(`/tenant/users${qs}`);
+    return this._api.get<ListTenantUsersResponse>('/tenant/users', {
+      query: {
+        q: opts?.q,
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public create(payload: CreateTenantUserRequest): Observable<TenantUser> {
-    return this._api.post<TenantUser>(`/tenant/users`, payload);
+    return this._api.post<TenantUser>('/tenant/users', payload);
   }
 
   public update(usuarioId: number, payload: UpdateTenantUserRequest): Observable<TenantUser> {

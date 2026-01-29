@@ -8,7 +8,6 @@ export type TenantClient = {
   nombre_razon: string;
   nit_ci?: string | null;
   telefono?: string | null;
-
   activo: boolean;
   link_activo?: boolean;
 };
@@ -37,18 +36,20 @@ export class TenantClientsApi {
   public constructor(private readonly _api: ApiClientService) {}
 
   public list(opts?: { q?: string; includeInactivos?: boolean }): Observable<ListTenantClientsResponse> {
-    const params: string[] = [];
-    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
-    if (opts?.includeInactivos) params.push('include_inactivos=true');
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<ListTenantClientsResponse>(`/tenant/clients${qs}`);
+    return this._api.get<ListTenantClientsResponse>('/tenant/clients', {
+      query: {
+        q: opts?.q,
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public get(clienteId: number, opts?: { includeInactivos?: boolean }): Observable<TenantClient> {
-    const params: string[] = [];
-    if (opts?.includeInactivos) params.push('include_inactivos=true');
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<TenantClient>(`/tenant/clients/${clienteId}${qs}`);
+    return this._api.get<TenantClient>(`/tenant/clients/${clienteId}`, {
+      query: {
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public create(payload: CreateTenantClientRequest): Observable<TenantClient> {

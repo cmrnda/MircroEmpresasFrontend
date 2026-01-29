@@ -34,8 +34,6 @@ export type UpdateTenantSupplierRequest = {
 };
 
 export type TenantSupplierProductsResponse = {
-  // tu backend hoy devuelve { data: { items: [...] } } en algunos casos
-  // yo lo dejo flexible
   items?: any[];
   data?: {
     items?: any[];
@@ -49,11 +47,12 @@ export class TenantSuppliersApi {
   public constructor(private readonly _api: ApiClientService) {}
 
   public list(opts?: { q?: string; includeInactivos?: boolean }): Observable<ListTenantSuppliersResponse> {
-    const params: string[] = [];
-    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
-    if (opts?.includeInactivos) params.push('include_inactivos=true');
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<ListTenantSuppliersResponse>(`/tenant/suppliers${qs}`);
+    return this._api.get<ListTenantSuppliersResponse>('/tenant/suppliers', {
+      query: {
+        q: opts?.q,
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public create(payload: CreateTenantSupplierRequest): Observable<TenantSupplier> {
@@ -72,25 +71,21 @@ export class TenantSuppliersApi {
     return this._api.post<TenantSupplier>(`/tenant/suppliers/${proveedorId}/restore`, {});
   }
 
-  // ✅ Lista productos (para tu POS o para “productos vinculados del proveedor”)
-  // Endpoint que ya estabas usando: GET /tenant/suppliers/products?proveedor_id=...
   public listProducts(opts?: { proveedorId?: number; q?: string; limit?: number; offset?: number }): Observable<TenantSupplierProductsResponse> {
-    const params: string[] = [];
-    if (opts?.proveedorId) params.push(`proveedor_id=${encodeURIComponent(String(opts.proveedorId))}`);
-    if (opts?.q) params.push(`q=${encodeURIComponent(String(opts.q))}`);
-    if (opts?.limit != null) params.push(`limit=${encodeURIComponent(String(opts.limit))}`);
-    if (opts?.offset != null) params.push(`offset=${encodeURIComponent(String(opts.offset))}`);
-
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<TenantSupplierProductsResponse>(`/tenant/suppliers/products${qs}`);
+    return this._api.get<TenantSupplierProductsResponse>('/tenant/suppliers/products', {
+      query: {
+        proveedor_id: opts?.proveedorId,
+        q: opts?.q,
+        limit: opts?.limit,
+        offset: opts?.offset
+      }
+    });
   }
 
-  // ✅ VINCULAR (ajusta si tu ruta real es otra)
   public linkProduct(proveedorId: number, productoId: number): Observable<{ ok: boolean }> {
     return this._api.post<{ ok: boolean }>(`/tenant/suppliers/${encodeURIComponent(String(proveedorId))}/products/${encodeURIComponent(String(productoId))}`, {});
   }
 
-  // ✅ DESVINCULAR (ajusta si tu ruta real es otra)
   public unlinkProduct(proveedorId: number, productoId: number): Observable<{ ok: boolean }> {
     return this._api.delete<{ ok: boolean }>(`/tenant/suppliers/${encodeURIComponent(String(proveedorId))}/products/${encodeURIComponent(String(productoId))}`);
   }

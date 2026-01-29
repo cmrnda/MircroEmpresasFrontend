@@ -9,13 +9,10 @@ export type TenantDashboardOverview = {
   expenses_total: number;
   profit_total: number;
   profit_margin_pct: number;
-
   sales_count: number;
   purchases_count: number;
-
   avg_sale_total: number;
   avg_purchase_total: number;
-
   products_count: number;
   categories_count: number;
   suppliers_count: number;
@@ -116,20 +113,21 @@ export class TenantDashboardApi {
   public constructor(private readonly _api: ApiClientService) {}
 
   public getDashboard(opts?: { from?: string; to?: string; group?: 'day' | 'month'; limit?: number }): Observable<TenantDashboardResponse> {
-    const params: string[] = [];
-    if (opts?.from) params.push(`from=${encodeURIComponent(opts.from)}`);
-    if (opts?.to) params.push(`to=${encodeURIComponent(opts.to)}`);
-    if (opts?.group) params.push(`group=${encodeURIComponent(opts.group)}`);
-    if (opts?.limit) params.push(`limit=${encodeURIComponent(String(opts.limit))}`);
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<TenantDashboardResponse>(`/tenant/dashboard${qs}`);
+    return this._api.get<TenantDashboardResponse>('/tenant/dashboard', {
+      query: {
+        from: opts?.from,
+        to: opts?.to,
+        group: opts?.group,
+        limit: opts?.limit
+      }
+    });
   }
 
   public saleDetail(ventaId: number): Observable<SaleDetailResponse> {
-    return this._api.get<SaleDetailResponse>(`/tenant/dashboard/sales/${encodeURIComponent(String(ventaId))}`);
+    return this._api.get<SaleDetailResponse>(`/tenant/dashboard/sales/${ventaId}`);
   }
 
   public purchaseDetail(compraId: number): Observable<PurchaseDetailResponse> {
-    return this._api.get<PurchaseDetailResponse>(`/tenant/dashboard/purchases/${encodeURIComponent(String(compraId))}`);
+    return this._api.get<PurchaseDetailResponse>(`/tenant/dashboard/purchases/${compraId}`);
   }
 }

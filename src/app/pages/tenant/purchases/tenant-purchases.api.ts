@@ -82,11 +82,12 @@ export class TenantPurchasesApi {
   public constructor(private readonly _api: ApiClientService) {}
 
   public list(opts?: { proveedorId?: number; estado?: string }): Observable<ListTenantPurchasesResponse> {
-    const params: string[] = [];
-    if (opts?.proveedorId) params.push(`proveedor_id=${encodeURIComponent(String(opts.proveedorId))}`);
-    if (opts?.estado) params.push(`estado=${encodeURIComponent(String(opts.estado))}`);
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<ListTenantPurchasesResponse>(`/tenant/purchases${qs}`);
+    return this._api.get<ListTenantPurchasesResponse>('/tenant/purchases', {
+      query: {
+        proveedor_id: opts?.proveedorId,
+        estado: opts?.estado
+      }
+    });
   }
 
   public get(compraId: number): Observable<TenantPurchase> {

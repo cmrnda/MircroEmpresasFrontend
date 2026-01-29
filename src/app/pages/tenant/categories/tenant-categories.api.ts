@@ -27,18 +27,20 @@ export class TenantCategoriesApi {
   public constructor(private readonly _api: ApiClientService) {}
 
   public list(opts?: { q?: string; includeInactivos?: boolean }): Observable<ListTenantCategoriesResponse> {
-    const params: string[] = [];
-    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
-    if (opts?.includeInactivos) params.push('include_inactivos=true');
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<ListTenantCategoriesResponse>(`/tenant/categories${qs}`);
+    return this._api.get<ListTenantCategoriesResponse>('/tenant/categories', {
+      query: {
+        q: opts?.q,
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public get(categoriaId: number, opts?: { includeInactivos?: boolean }): Observable<TenantCategory> {
-    const params: string[] = [];
-    if (opts?.includeInactivos) params.push('include_inactivos=true');
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<TenantCategory>(`/tenant/categories/${categoriaId}${qs}`);
+    return this._api.get<TenantCategory>(`/tenant/categories/${categoriaId}`, {
+      query: {
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public create(payload: CreateTenantCategoryRequest): Observable<TenantCategory> {

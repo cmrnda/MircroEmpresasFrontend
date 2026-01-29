@@ -1,503 +1,61 @@
 <section class="space-y-5">
-  <div class="rounded-3xl border border-slate-200 bg-white shadow-sm p-4 md:p-6 sticky top-[64px] z-10">
-    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-      <div class="min-w-0">
-        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Tenant POS</div>
-        <div class="mt-1 text-2xl md:text-3xl font-semibold text-slate-900 truncate">Caja</div>
-        <div class="mt-1 text-sm text-slate-500">
-          Empresa <span class="font-semibold text-slate-700">#{{ empresaId() }}</span>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-          (click)="vm.loadInit()"
-        >
-          <span class="material-symbols-outlined text-[18px]">refresh</span>
-          Recargar
-        </button>
-
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
-          (click)="vm.clearTicket()"
-          [disabled]="vm.ticketItems().length === 0"
-        >
-          <span class="material-symbols-outlined text-[18px]">delete</span>
-          Limpiar ticket
-        </button>
-      </div>
-    </div>
-
-    <div class="mt-5 grid grid-cols-12 gap-3">
-      <div class="col-span-12 lg:col-span-7">
-        <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-          <span class="material-symbols-outlined text-slate-500 text-[20px]">search</span>
-          <input
-            class="w-full bg-transparent text-sm outline-none"
-            placeholder="Buscar productos..."
-            [value]="vm.q()"
-            (input)="vm.setQ(($any($event.target)).value)"
-            (keydown.enter)="vm.search()"
-          />
-        </div>
-      </div>
-
-      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
-        <select
-          class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-          (change)="vm.setCategoria(($any($event.target)).value)"
-        >
-          <option value="">Todas las categorias</option>
-          <option *ngFor="let c of vm.categories()" [value]="c.categoria_id">
-            {{ c.nombre }}
-          </option>
-        </select>
-      </div>
-
-      <div class="col-span-12 sm:col-span-6 lg:col-span-2">
-        <button
-          type="button"
-          class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-          (click)="vm.search()"
-        >
-          <span class="material-symbols-outlined text-[18px]">manage_search</span>
-          Buscar
-        </button>
-      </div>
-    </div>
-
-    <div *ngIf="vm.error()" class="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-      {{ vm.error() }}
-    </div>
-  </div>
+  <app-pos-header-filters
+    [empresaId]="empresaId()"
+    [loading]="vm.loading()"
+    [error]="vm.error()"
+    [q]="vm.q()"
+    [categoriaId]="vm.categoriaId()"
+    [categories]="vm.categories()"
+    [ticketCount]="vm.ticketCount()"
+    (qChange)="vm.setQ($event)"
+    (categoriaChange)="vm.setCategoria($event)"
+    (search)="vm.search()"
+    (reload)="vm.loadInit()"
+    (clearTicket)="vm.clearTicket()"
+  />
 
   <div class="grid grid-cols-12 gap-4">
-    <div class="col-span-12 xl:col-span-8 space-y-4">
-      <div class="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
-          <div class="min-w-0">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Catalogo</div>
-            <div class="mt-1 text-sm text-slate-600">
-              Mostrando <span class="font-semibold text-slate-900">{{ vm.products().items.length }}</span> de
-              <span class="font-semibold text-slate-900">{{ vm.products().total }}</span>
-            </div>
-          </div>
-
-          <div class="hidden sm:flex items-center gap-2">
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm hover:bg-slate-50"
-              (click)="vm.prev()"
-            >
-              <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-              Anterior
-            </button>
-
-            <div class="text-sm text-slate-600">
-              Pagina <span class="font-semibold text-slate-900">{{ vm.products().page }}</span>
-            </div>
-
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm hover:bg-slate-50"
-              (click)="vm.next()"
-            >
-              Siguiente
-              <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="p-5">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            <div
-              *ngFor="let p of vm.products().items"
-              class="group rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition"
-            >
-              <div class="aspect-[16/10] bg-slate-50 border-b border-slate-200 overflow-hidden">
-                <img
-                  *ngIf="vm.imageUrl(p)"
-                  [src]="vm.imageUrl(p)!"
-                  class="h-full w-full object-cover group-hover:scale-[1.02] transition"
-                />
-                <div *ngIf="!vm.imageUrl(p)" class="h-full w-full grid place-items-center text-slate-400">
-                  <span class="material-symbols-outlined text-[28px]">image</span>
-                </div>
-              </div>
-
-              <div class="p-4">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <div class="truncate text-sm font-semibold text-slate-900">{{ p.descripcion }}</div>
-                    <div class="mt-1 text-xs text-slate-500">
-                      Codigo: <span class="font-semibold text-slate-700">{{ p.codigo }}</span>
-                    </div>
-                  </div>
-
-                  <div class="shrink-0 text-right">
-                    <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[12px] font-semibold text-slate-700">
-                      <span class="material-symbols-outlined text-[16px]">inventory_2</span>
-                      {{ p.cantidad_actual }}
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-4 flex items-end justify-between gap-3">
-                  <div>
-                    <div class="text-xs text-slate-500">Precio</div>
-                    <div class="text-lg font-semibold text-slate-900">{{ fmt(p.precio) }}</div>
-                  </div>
-
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-                    (click)="vm.addToTicket(p)"
-                    [disabled]="(p.cantidad_actual ?? 0) <= 0"
-                  >
-                    <span class="material-symbols-outlined text-[18px]">add</span>
-                    Ticket
-                  </button>
-                </div>
-
-                <div class="mt-3 rounded-2xl bg-slate-50 border border-slate-200 p-3">
-                  <div class="text-xs text-slate-500">ID</div>
-                  <div class="text-sm font-semibold text-slate-700">#{{ p.producto_id }}</div>
-                </div>
-              </div>
-            </div>
-
-            <div
-              *ngIf="vm.products().items.length === 0"
-              class="rounded-3xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500 sm:col-span-2 xl:col-span-3 2xl:col-span-4"
-            >
-              No hay productos
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
-          <div>
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Ticket</div>
-            <div class="mt-1 text-sm text-slate-600">
-              Items <span class="font-semibold text-slate-900">{{ vm.ticketCount() }}</span>
-            </div>
-          </div>
-
-          <div class="text-right">
-            <div class="text-xs text-slate-500">Subtotal</div>
-            <div class="text-lg font-semibold text-slate-900">{{ fmt(vm.ticketSubtotal()) }}</div>
-          </div>
-        </div>
-
-        <div *ngIf="vm.ticketItems().length === 0" class="p-10 text-center text-sm text-slate-500">
-          Ticket vacio, agrega productos
-        </div>
-
-        <div *ngIf="vm.ticketItems().length > 0" class="overflow-x-auto">
-          <table class="min-w-[820px] w-full text-sm">
-            <thead class="bg-slate-50 text-slate-600">
-            <tr>
-              <th class="px-5 py-4 text-left">Producto</th>
-              <th class="px-5 py-4 text-left">Precio</th>
-              <th class="px-5 py-4 text-left">Cantidad</th>
-              <th class="px-5 py-4 text-left">Subtotal</th>
-              <th class="px-5 py-4 text-right">Acciones</th>
-            </tr>
-            </thead>
-
-            <tbody class="divide-y">
-            <tr *ngFor="let it of vm.ticketItems()" class="hover:bg-slate-50">
-              <td class="px-5 py-4">
-                <div class="flex items-center gap-4">
-                  <div class="h-12 w-12 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                    <img *ngIf="it.primary_image_url" [src]="it.primary_image_url" class="h-full w-full object-cover" />
-                    <div *ngIf="!it.primary_image_url" class="grid h-full w-full place-items-center text-slate-400">
-                      <span class="material-symbols-outlined text-[20px]">image</span>
-                    </div>
-                  </div>
-
-                  <div class="min-w-0">
-                    <div class="truncate font-semibold text-slate-900">{{ it.descripcion }}</div>
-                    <div class="mt-1 text-xs text-slate-500">
-                      ID: <span class="font-semibold text-slate-700">#{{ it.producto_id }}</span>
-                    </div>
-                    <div *ngIf="it.max_qty !== null" class="mt-1 text-xs text-slate-500">
-                      Max: <span class="font-semibold text-slate-700">{{ it.max_qty }}</span>
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-              <td class="px-5 py-4">
-                <div class="text-xs text-slate-500">Unitario</div>
-                <div class="font-semibold text-slate-900">{{ fmt(it.precio) }}</div>
-              </td>
-
-              <td class="px-5 py-4">
-                <div class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1">
-                  <button
-                    type="button"
-                    class="grid h-9 w-9 place-items-center rounded-xl hover:bg-slate-50"
-                    (click)="vm.dec(it.producto_id)"
-                  >
-                    <span class="material-symbols-outlined text-[18px]">remove</span>
-                  </button>
-
-                  <input
-                    class="w-16 bg-transparent text-center text-sm font-semibold outline-none"
-                    type="number"
-                    min="1"
-                    [attr.max]="it.max_qty !== null ? it.max_qty : null"
-                    [value]="it.qty"
-                    (change)="vm.setQty(it.producto_id, ($any($event.target)).value)"
-                  />
-
-                  <button
-                    type="button"
-                    class="grid h-9 w-9 place-items-center rounded-xl hover:bg-slate-50"
-                    (click)="vm.inc(it.producto_id)"
-                  >
-                    <span class="material-symbols-outlined text-[18px]">add</span>
-                  </button>
-                </div>
-              </td>
-
-              <td class="px-5 py-4">
-                <div class="text-xs text-slate-500">Subtotal</div>
-                <div class="font-semibold text-slate-900">{{ fmt(it.precio * it.qty) }}</div>
-              </td>
-
-              <td class="px-5 py-4 text-right">
-                <button
-                  type="button"
-                  class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold hover:bg-slate-50"
-                  (click)="vm.remove(it.producto_id)"
-                >
-                  <span class="material-symbols-outlined text-[18px]">close</span>
-                  Quitar
-                </button>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <div class="col-span-12 xl:col-span-8">
+      <app-pos-catalog
+        [loading]="vm.loading()"
+        [products]="vm.products()"
+        [imageUrlFn]="vm.imageUrl.bind(vm)"
+        [fmtFn]="fmt.bind(this)"
+        (add)="vm.addToTicket($event)"
+        (prev)="vm.prev()"
+        (next)="vm.next()"
+      />
     </div>
 
-    <aside class="col-span-12 xl:col-span-4 space-y-4">
-      <div class="rounded-3xl border border-slate-200 bg-white shadow-sm p-5 sticky top-[84px] space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Cliente</div>
-            <div class="mt-1 text-lg font-semibold text-slate-900">
-              {{ vm.clientMode() === 'found' ? 'Seleccionado' : vm.clientMode() === 'new' ? 'Crear' : 'Buscar' }}
-            </div>
-          </div>
-          <div class="grid h-10 w-10 place-items-center rounded-2xl bg-slate-50 border border-slate-200 text-slate-600">
-            <span class="material-symbols-outlined text-[20px]">person</span>
-          </div>
-        </div>
-
-        <div class="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
-          <div class="grid grid-cols-12 gap-2 items-center">
-            <div class="col-span-8">
-              <input
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-                placeholder="NIT o CI"
-                [value]="vm.clientForm().nit_ci"
-                (input)="vm.setClientField('nit_ci', ($any($event.target)).value)"
-                (keydown.enter)="vm.lookupClient()"
-              />
-            </div>
-            <div class="col-span-4">
-              <button
-                type="button"
-                class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-                (click)="vm.lookupClient()"
-                [disabled]="vm.clientLoading()"
-              >
-                <span class="material-symbols-outlined text-[18px]">search</span>
-                {{ vm.clientLoading() ? '...' : 'Buscar' }}
-              </button>
-            </div>
-          </div>
-
-          <div *ngIf="vm.clientError()" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {{ vm.clientError() }}
-          </div>
-
-          <div *ngIf="vm.clientMode() === 'found'" class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Datos</div>
-            <div class="mt-2 text-sm font-semibold text-slate-900">{{ vm.clientForm().nombre_razon }}</div>
-            <div class="mt-1 text-xs text-slate-600">
-              Tel: <span class="font-semibold text-slate-900">{{ vm.clientForm().telefono || '-' }}</span>
-            </div>
-            <div class="mt-1 text-xs text-slate-600">
-              Email: <span class="font-semibold text-slate-900">{{ vm.clientForm().email || '-' }}</span>
-            </div>
-
-            <button
-              type="button"
-              class="mt-3 inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold hover:bg-slate-50"
-              (click)="vm.clearClient()"
-            >
-              <span class="material-symbols-outlined text-[18px]">restart_alt</span>
-              Cambiar
-            </button>
-          </div>
-
-          <div *ngIf="vm.clientMode() === 'new'" class="space-y-3">
-            <input
-              class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-              placeholder="Nombre o razon social"
-              [value]="vm.clientForm().nombre_razon"
-              (input)="vm.setClientField('nombre_razon', ($any($event.target)).value)"
-            />
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <input
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-                placeholder="Telefono"
-                [value]="vm.clientForm().telefono"
-                (input)="vm.setClientField('telefono', ($any($event.target)).value)"
-              />
-              <input
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-                placeholder="Email (opcional)"
-                [value]="vm.clientForm().email"
-                (input)="vm.setClientField('email', ($any($event.target)).value)"
-              />
-            </div>
-
-            <button
-              type="button"
-              class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-              (click)="vm.createClient()"
-              [disabled]="vm.clientLoading()"
-            >
-              <span class="material-symbols-outlined text-[18px]">person_add</span>
-              {{ vm.clientLoading() ? 'Guardando...' : 'Crear cliente' }}
-            </button>
-          </div>
-        </div>
-
-        <div class="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Pago</div>
-              <div class="mt-1 text-sm font-semibold text-slate-900">Total</div>
-            </div>
-            <div class="text-right">
-              <div class="text-xs text-slate-500">A pagar</div>
-              <div class="text-2xl font-semibold text-slate-900">{{ fmt(vm.total()) }}</div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-12 gap-2">
-            <div class="col-span-12">
-              <select
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-                [value]="vm.payment().metodo"
-                (change)="vm.setPaymentField('metodo', ($any($event.target)).value)"
-              >
-                <option value="EFECTIVO">EFECTIVO</option>
-                <option value="QR">QR</option>
-                <option value="TARJETA">TARJETA</option>
-              </select>
-            </div>
-
-            <div class="col-span-12">
-              <input
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-                type="number"
-                min="0"
-                placeholder="Descuento total"
-                [value]="vm.payment().descuento_total"
-                (change)="vm.setPaymentField('descuento_total', ($any($event.target)).value)"
-              />
-            </div>
-
-            <div class="col-span-12" *ngIf="vm.payment().metodo === 'EFECTIVO'">
-              <input
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-                type="number"
-                min="0"
-                placeholder="Monto recibido"
-                [value]="vm.payment().monto"
-                (change)="vm.setPaymentField('monto', ($any($event.target)).value)"
-              />
-              <div class="mt-2 text-xs text-slate-600">
-                Cambio: <span class="font-semibold text-slate-900">{{ fmt(vm.cambio()) }}</span>
-              </div>
-            </div>
-
-            <div class="col-span-12" *ngIf="vm.payment().metodo === 'QR'">
-              <input
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-                placeholder="Referencia QR (opcional)"
-                [value]="vm.payment().referencia_qr"
-                (input)="vm.setPaymentField('referencia_qr', ($any($event.target)).value)"
-              />
-              <input
-                class="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-                type="number"
-                min="0"
-                placeholder="Monto (opcional)"
-                [value]="vm.payment().monto"
-                (change)="vm.setPaymentField('monto', ($any($event.target)).value)"
-              />
-            </div>
-
-            <div class="col-span-12" *ngIf="vm.payment().metodo === 'TARJETA'">
-              <input
-                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"
-                type="number"
-                min="0"
-                placeholder="Monto (opcional)"
-                [value]="vm.payment().monto"
-                (change)="vm.setPaymentField('monto', ($any($event.target)).value)"
-              />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-            (click)="vm.createSale()"
-            [disabled]="vm.placing() || vm.ticketItems().length === 0"
-          >
-            <span class="material-symbols-outlined text-[18px]">point_of_sale</span>
-            {{ vm.placing() ? 'Registrando...' : 'Confirmar venta' }}
-          </button>
-          <button
-           *ngIf="vm.successVentaId()"
-            (click)="downloadReceipt()"
-            class="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-slate-50"
-            type="button"
-          >
-  <span class="material-symbols-outlined text-[18px]">download</span>
-  Descargar recibo (PDF)
-</button>
-
-
-          <div *ngIf="vm.placeError()" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {{ vm.placeError() }}
-          </div>
-
-          <div *ngIf="vm.successVentaId()" class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            Venta creada: #{{ vm.successVentaId() }}
-          </div>
-        </div>
-
-        <div class="text-xs text-slate-500">
-          Tip: si el stock baja, el ticket se ajusta al recargar catalogo.
-        </div>
-      </div>
+    <aside class="col-span-12 xl:col-span-4">
+      <app-pos-checkout
+        [placing]="vm.placing()"
+        [placeError]="vm.placeError()"
+        [successVentaId]="vm.successVentaId()"
+        [ticketItems]="vm.ticketItems()"
+        [ticketCount]="vm.ticketCount()"
+        [ticketSubtotal]="vm.ticketSubtotal()"
+        [total]="vm.total()"
+        [cambio]="vm.cambio()"
+        [clientMode]="vm.clientMode()"
+        [clientLoading]="vm.clientLoading()"
+        [clientError]="vm.clientError()"
+        [clientForm]="vm.clientForm()"
+        [payment]="vm.payment()"
+        [fmtFn]="fmt.bind(this)"
+        (inc)="vm.inc($event)"
+        (dec)="vm.dec($event)"
+        (setQty)="vm.setQty($event.producto_id, $event.qty)"
+        (remove)="vm.remove($event)"
+        (lookupClient)="vm.lookupClient()"
+        (createClient)="vm.createClient()"
+        (clearClient)="vm.clearClient()"
+        (setClientField)="vm.setClientField($event.key, $event.value)"
+        (setPaymentField)="vm.setPaymentField($event.key, $event.value)"
+        (confirmSale)="vm.createSale()"
+        (downloadReceipt)="downloadReceipt()"
+        (shareReceipt)="shareReceipt()"
+      />
     </aside>
   </div>
 </section>

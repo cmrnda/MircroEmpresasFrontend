@@ -31,20 +31,17 @@ export interface ListTenantsResponse {
 
 @Injectable({ providedIn: 'root' })
 export class TenantsApi {
-
   public constructor(private readonly _api: ApiClientService) {}
 
   public list(q?: string, estado?: 'ACTIVA' | 'SUSPENDIDA'): Observable<ListTenantsResponse> {
-    const params: string[] = [];
+    const includeInactivos = estado === 'SUSPENDIDA' ? true : estado === 'ACTIVA' ? false : undefined;
 
-    if (q) params.push(`q=${encodeURIComponent(q)}`);
-
-    // contrato real con el backend
-    if (estado === 'ACTIVA') params.push('include_inactivos=false');
-    if (estado === 'SUSPENDIDA') params.push('include_inactivos=true');
-
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<ListTenantsResponse>(`/platform/tenants${qs}`);
+    return this._api.get<ListTenantsResponse>('/platform/tenants', {
+      query: {
+        q,
+        include_inactivos: includeInactivos
+      }
+    });
   }
 
   public create(payload: CreateTenantRequest): Observable<Empresa> {

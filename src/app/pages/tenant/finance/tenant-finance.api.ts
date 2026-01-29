@@ -191,80 +191,116 @@ export type SaleDetailResponse = {
 export class TenantFinanceApi {
   public constructor(private readonly _api: ApiClientService) {}
 
-  private qs(params: Record<string, string | number | null | undefined>): string {
-    const parts: string[] = [];
-    for (const [k, v] of Object.entries(params)) {
-      if (v === undefined || v === null) continue;
-      const s = String(v).trim();
-      if (!s) continue;
-      parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(s)}`);
-    }
-    return parts.length ? `?${parts.join('&')}` : '';
-  }
-
   public overview(opts?: { from?: string; to?: string }): Observable<FinanceOverview> {
-    const q = this.qs({ from: opts?.from, to: opts?.to });
-    return this._api.get<FinanceOverview>(`/tenant/finance/overview${q}`);
+    return this._api.get<FinanceOverview>('/tenant/finance/overview', {
+      query: {
+        from: opts?.from,
+        to: opts?.to
+      }
+    });
   }
 
-  public cashflowSeries(opts: { from?: string; to?: string; group?: 'day' | 'month' }): Observable<CashflowSeriesResponse> {
-    const q = this.qs({ from: opts.from, to: opts.to, group: opts.group ?? 'day' });
-    return this._api.get<CashflowSeriesResponse>(`/tenant/finance/cashflow-series${q}`);
+  public cashflowSeries(opts?: { from?: string; to?: string; group?: 'day' | 'month' }): Observable<CashflowSeriesResponse> {
+    return this._api.get<CashflowSeriesResponse>('/tenant/finance/cashflow-series', {
+      query: {
+        from: opts?.from,
+        to: opts?.to,
+        group: opts?.group ?? 'day'
+      }
+    });
   }
 
-  public suppliersSummary(opts: { from?: string; to?: string; limit?: number; offset?: number }): Observable<SuppliersSummaryResponse> {
-    const q = this.qs({ from: opts.from, to: opts.to, limit: opts.limit ?? 10, offset: opts.offset ?? 0 });
-    return this._api.get<SuppliersSummaryResponse>(`/tenant/finance/suppliers-summary${q}`);
+  public suppliersSummary(opts?: { from?: string; to?: string; limit?: number; offset?: number }): Observable<SuppliersSummaryResponse> {
+    return this._api.get<SuppliersSummaryResponse>('/tenant/finance/suppliers-summary', {
+      query: {
+        from: opts?.from,
+        to: opts?.to,
+        limit: opts?.limit ?? 10,
+        offset: opts?.offset ?? 0
+      }
+    });
   }
 
-  public topProducts(opts: { from?: string; to?: string; limit?: number; offset?: number }): Observable<TopProductsResponse> {
-    const q = this.qs({ from: opts.from, to: opts.to, limit: opts.limit ?? 10, offset: opts.offset ?? 0 });
-    return this._api.get<TopProductsResponse>(`/tenant/finance/top-products${q}`);
+  public topProducts(opts?: { from?: string; to?: string; limit?: number; offset?: number }): Observable<TopProductsResponse> {
+    return this._api.get<TopProductsResponse>('/tenant/finance/top-products', {
+      query: {
+        from: opts?.from,
+        to: opts?.to,
+        limit: opts?.limit ?? 10,
+        offset: opts?.offset ?? 0
+      }
+    });
   }
 
-  public topCategories(opts: { from?: string; to?: string; limit?: number; offset?: number }): Observable<TopCategoriesResponse> {
-    const q = this.qs({ from: opts.from, to: opts.to, limit: opts.limit ?? 10, offset: opts.offset ?? 0 });
-    return this._api.get<TopCategoriesResponse>(`/tenant/finance/top-categories${q}`);
+  public topCategories(opts?: { from?: string; to?: string; limit?: number; offset?: number }): Observable<TopCategoriesResponse> {
+    return this._api.get<TopCategoriesResponse>('/tenant/finance/top-categories', {
+      query: {
+        from: opts?.from,
+        to: opts?.to,
+        limit: opts?.limit ?? 10,
+        offset: opts?.offset ?? 0
+      }
+    });
   }
 
   public inventoryAlerts(opts?: { limit?: number; offset?: number }): Observable<InventoryAlertsResponse> {
-    const q = this.qs({ limit: opts?.limit ?? 20, offset: opts?.offset ?? 0 });
-    return this._api.get<InventoryAlertsResponse>(`/tenant/finance/inventory-alerts${q}`);
+    return this._api.get<InventoryAlertsResponse>('/tenant/finance/inventory-alerts', {
+      query: {
+        limit: opts?.limit ?? 20,
+        offset: opts?.offset ?? 0
+      }
+    });
   }
 
   public inventoryValuation(): Observable<InventoryValuation> {
-    return this._api.get<InventoryValuation>(`/tenant/finance/inventory-valuation`);
+    return this._api.get<InventoryValuation>('/tenant/finance/inventory-valuation');
   }
 
-  public purchases(opts: { proveedor_id?: number | null; estado?: string | null; from?: string; to?: string; limit?: number; offset?: number }): Observable<PurchasesListResponse> {
-    const q = this.qs({
-      proveedor_id: opts.proveedor_id ?? null,
-      estado: opts.estado ?? null,
-      from: opts.from,
-      to: opts.to,
-      limit: opts.limit ?? 20,
-      offset: opts.offset ?? 0
+  public purchases(opts?: {
+    proveedor_id?: number | null;
+    estado?: string | null;
+    from?: string;
+    to?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<PurchasesListResponse> {
+    return this._api.get<PurchasesListResponse>('/tenant/finance/purchases', {
+      query: {
+        proveedor_id: opts?.proveedor_id ?? undefined,
+        estado: opts?.estado ?? undefined,
+        from: opts?.from,
+        to: opts?.to,
+        limit: opts?.limit ?? 20,
+        offset: opts?.offset ?? 0
+      }
     });
-    return this._api.get<PurchasesListResponse>(`/tenant/finance/purchases${q}`);
   }
 
   public purchaseDetail(compra_id: number): Observable<PurchaseDetailResponse> {
-    return this._api.get<PurchaseDetailResponse>(`/tenant/finance/purchases/${encodeURIComponent(String(compra_id))}`);
+    return this._api.get<PurchaseDetailResponse>(`/tenant/finance/purchases/${compra_id}`);
   }
 
-  public sales(opts: { cliente_id?: number | null; estado?: string | null; from?: string; to?: string; limit?: number; offset?: number }): Observable<SalesListResponse> {
-    const q = this.qs({
-      cliente_id: opts.cliente_id ?? null,
-      estado: opts.estado ?? null,
-      from: opts.from,
-      to: opts.to,
-      limit: opts.limit ?? 20,
-      offset: opts.offset ?? 0
+  public sales(opts?: {
+    cliente_id?: number | null;
+    estado?: string | null;
+    from?: string;
+    to?: string;
+    limit?: number;
+    offset?: number;
+  }): Observable<SalesListResponse> {
+    return this._api.get<SalesListResponse>('/tenant/finance/sales', {
+      query: {
+        cliente_id: opts?.cliente_id ?? undefined,
+        estado: opts?.estado ?? undefined,
+        from: opts?.from,
+        to: opts?.to,
+        limit: opts?.limit ?? 20,
+        offset: opts?.offset ?? 0
+      }
     });
-    return this._api.get<SalesListResponse>(`/tenant/finance/sales${q}`);
   }
 
   public saleDetail(venta_id: number): Observable<SaleDetailResponse> {
-    return this._api.get<SaleDetailResponse>(`/tenant/finance/sales/${encodeURIComponent(String(venta_id))}`);
+    return this._api.get<SaleDetailResponse>(`/tenant/finance/sales/${venta_id}`);
   }
 }

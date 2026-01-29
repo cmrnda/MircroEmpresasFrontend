@@ -36,6 +36,7 @@
     "@ionic/angular": "^8.7.17",
     "build": "^0.1.4",
     "ng": "^0.0.0",
+    "pdfmake": "^0.3.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "^0.16.0"
@@ -45,6 +46,7 @@
     "@angular/build": "^21.0.5",
     "@angular/cli": "^21.0.5",
     "@angular/compiler-cli": "^21.0.0",
+    "@types/pdfmake": "^0.3.0",
     "autoprefixer": "^10.4.23",
     "jsdom": "^27.1.0",
     "postcss": "^8.5.6",

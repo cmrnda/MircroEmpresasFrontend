@@ -38,17 +38,15 @@ export class NotificationsWidgetComponent {
   public readonly enabled = computed(() => this.mode() !== null);
 
   public constructor() {
-    this.loadUnreadCount()
-      .pipe(
-        catchError(() => of(null)),
-        takeUntilDestroyed(this._destroyRef)
-      )
+    // Primer load
+    this.safeLoadUnreadCount()
+      .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe();
 
+    // Polling
     interval(15000)
       .pipe(
-        switchMap(() => (this.enabled() ? this.loadUnreadCount() : of(null))),
-        catchError(() => of(null)),
+        switchMap(() => this.safeLoadUnreadCount()),
         takeUntilDestroyed(this._destroyRef)
       )
       .subscribe();
@@ -87,46 +85,39 @@ export class NotificationsWidgetComponent {
   }
 
   public markRead(n: NotificationDto): void {
-    if (!n || n.leido_en) return;
+    const id = toInt(n?.notificacion_id);
+    if (!id) return;
+    if (n.leido_en) return;
 
     const m = this.mode();
-    const empresaId = this._state.empresaId();
+    if (!m) return;
+
+    const empresaId = toInt(this._state.empresaId());
+
+    const onOk = () => this.applyLocalRead(id);
 
     if (m === 'client') {
-      if (empresaId == null) return;
-
-      this._api.clientMarkRead(toInt(empresaId), toInt(n.notificacion_id))
-        .pipe(
-          tap(() => this.applyLocalRead(toInt(n.notificacion_id))),
-          catchError(() => of(null)),
-          takeUntilDestroyed(this._destroyRef)
-        )
+      if (!empresaId) return;
+      this._api.clientMarkRead(empresaId, id)
+        .pipe(tap(onOk), catchError(() => of(null)), takeUntilDestroyed(this._destroyRef))
         .subscribe();
       return;
     }
 
     if (m === 'platform') {
-      this._api.platformMarkRead(toInt(n.notificacion_id))
-        .pipe(
-          tap(() => this.applyLocalRead(toInt(n.notificacion_id))),
-          catchError(() => of(null)),
-          takeUntilDestroyed(this._destroyRef)
-        )
+      this._api.platformMarkRead(id)
+        .pipe(tap(onOk), catchError(() => of(null)), takeUntilDestroyed(this._destroyRef))
         .subscribe();
       return;
     }
 
-    this._api.tenantMarkRead(toInt(n.notificacion_id))
-      .pipe(
-        tap(() => this.applyLocalRead(toInt(n.notificacion_id))),
-        catchError(() => of(null)),
-        takeUntilDestroyed(this._destroyRef)
-      )
+    this._api.tenantMarkRead(id)
+      .pipe(tap(onOk), catchError(() => of(null)), takeUntilDestroyed(this._destroyRef))
       .subscribe();
   }
 
   public trackById(_: number, n: NotificationDto): number {
-    return n.notificacion_id;
+    return toInt(n?.notificacion_id);
   }
 
   public formatDate(iso: string): string {
@@ -159,14 +150,19 @@ export class NotificationsWidgetComponent {
     if (this.open()) this.open.set(false);
   }
 
+  private safeLoadUnreadCount() {
+    if (!this.enabled()) return of(null);
+    return this.loadUnreadCount().pipe(catchError(() => of(null)));
+  }
+
   private loadUnreadCount() {
     const m = this.mode();
-    const empresaId = this._state.empresaId();
+    const empresaId = toInt(this._state.empresaId());
 
     if (m === 'client') {
-      if (empresaId == null) return of(null);
+      if (!empresaId) return of(null);
 
-      return this._api.clientUnreadCount(toInt(empresaId)).pipe(
+      return this._api.clientUnreadCount(empresaId).pipe(
         tap(res => this.unread.set(toInt(res?.data?.unread ?? 0))),
         catchError(() => of(null))
       );
@@ -187,16 +183,16 @@ export class NotificationsWidgetComponent {
 
   private loadList() {
     const m = this.mode();
-    const empresaId = this._state.empresaId();
+    const empresaId = toInt(this._state.empresaId());
 
     const limit = 20;
     const offset = 0;
     const unreadOnly = this.unreadOnly();
 
     if (m === 'client') {
-      if (empresaId == null) return of(null);
+      if (!empresaId) return of(null);
 
-      return this._api.clientList(toInt(empresaId), { limit, offset, unread_only: unreadOnly }).pipe(
+      return this._api.clientList(empresaId, { limit, offset, unread_only: unreadOnly }).pipe(
         tap(res => this.items.set((res?.data ?? []) as NotificationDto[])),
         catchError(() => of(null))
       );
@@ -219,16 +215,17 @@ export class NotificationsWidgetComponent {
     const now = new Date().toISOString();
 
     if (this.unreadOnly()) {
-      this.items.update(arr => arr.filter(x => x.notificacion_id !== notificacionId));
+      this.items.update(arr => (arr || []).filter(x => toInt(x?.notificacion_id) !== notificacionId));
     } else {
-      this.items.update(arr => arr.map(x => (x.notificacion_id === notificacionId ? { ...x, leido_en: now } : x)));
+      this.items.update(arr => (arr || []).map(x => (toInt(x?.notificacion_id) === notificacionId ? { ...x, leido_en: now } : x)));
     }
 
-    this.unread.update(v => Math.max(0, v - 1));
+    this.unread.update(v => Math.max(0, toInt(v) - 1));
   }
 }
 
 function toInt(v: any): number {
   const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
+  if (!Number.isFinite(n)) return 0;
+  return Math.trunc(n);
 }

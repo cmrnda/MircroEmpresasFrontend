@@ -29,7 +29,6 @@ export type UpdatePlatformSubscriptionRequest = Partial<{
   suscripcion_inicio: string | null;
   suscripcion_fin: string | null;
   suscripcion_renovacion: string | null;
-
   ultimo_pago_monto: number | null;
   ultimo_pago_moneda: string | null;
   ultimo_pago_metodo: string | null;
@@ -43,8 +42,11 @@ export class PlatformSubscriptionsApi {
   public constructor(private readonly _api: ApiClientService) {}
 
   public list(opts?: { includeInactivos?: boolean }): Observable<ListPlatformSubscriptionsResponse> {
-    const qs = opts?.includeInactivos ? '?include_inactivos=true' : '';
-    return this._api.get<ListPlatformSubscriptionsResponse>(`/platform/subscriptions${qs}`);
+    return this._api.get<ListPlatformSubscriptionsResponse>('/platform/subscriptions', {
+      query: {
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public get(empresaId: number): Observable<PlatformSubscriptionRow> {

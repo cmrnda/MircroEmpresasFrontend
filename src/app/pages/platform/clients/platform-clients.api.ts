@@ -45,14 +45,13 @@ export class PlatformClientsApi {
   public constructor(private readonly _api: ApiClientService) {}
 
   public list(opts?: { empresaId?: number; q?: string; includeInactivos?: boolean }): Observable<ListPlatformClientsResponse> {
-    const params: string[] = [];
-
-    if (opts?.empresaId) params.push(`empresa_id=${encodeURIComponent(String(opts.empresaId))}`);
-    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
-    if (opts?.includeInactivos) params.push('include_inactivos=true');
-
-    const qs = params.length ? `?${params.join('&')}` : '';
-    return this._api.get<ListPlatformClientsResponse>(`/platform/clients${qs}`);
+    return this._api.get<ListPlatformClientsResponse>('/platform/clients', {
+      query: {
+        empresa_id: opts?.empresaId,
+        q: opts?.q,
+        include_inactivos: opts?.includeInactivos ? true : undefined
+      }
+    });
   }
 
   public get(clienteId: number): Observable<PlatformClient> {

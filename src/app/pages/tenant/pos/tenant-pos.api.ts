@@ -118,35 +118,36 @@ export class TenantPosApi {
     empresa_id: number,
     opts?: { q?: string; categoriaId?: number | null; page?: number; pageSize?: number }
   ): Observable<PosProductsResponse> {
-    const params: string[] = [];
-
-    if (opts?.q) params.push(`q=${encodeURIComponent(opts.q)}`);
-    if (opts?.categoriaId != null) params.push(`categoria_id=${encodeURIComponent(String(opts.categoriaId))}`);
-    if (opts?.page != null) params.push(`page=${encodeURIComponent(String(opts.page))}`);
-    if (opts?.pageSize != null) params.push(`page_size=${encodeURIComponent(String(opts.pageSize))}`);
-
-    const qs = params.length ? `?${params.join('&')}` : '';
-
-    return this._api.get<PosProductsResponse>(`/shop/${empresa_id}/products${qs}`).pipe(
-      map((res) => {
-        const items = (res?.items || []).map((p) => ({
-          ...p,
-          cantidad_actual: Number((p as any)?.cantidad_actual ?? 0),
-          precio: Number((p as any)?.precio ?? 0)
-        }));
-        return {
-          items,
-          page: Number(res?.page ?? 1),
-          page_size: Number(res?.page_size ?? (opts?.pageSize ?? 20)),
-          total: Number(res?.total ?? items.length)
-        };
+    return this._api
+      .get<PosProductsResponse>(`/shop/${empresa_id}/products`, {
+        query: {
+          q: opts?.q,
+          categoria_id: opts?.categoriaId ?? undefined,
+          page: opts?.page ?? undefined,
+          page_size: opts?.pageSize ?? undefined
+        }
       })
-    );
+      .pipe(
+        map((res) => {
+          const items = (res?.items || []).map((p) => ({
+            ...p,
+            cantidad_actual: Number((p as any)?.cantidad_actual ?? 0),
+            precio: Number((p as any)?.precio ?? 0)
+          }));
+          return {
+            items,
+            page: Number(res?.page ?? 1),
+            page_size: Number(res?.page_size ?? (opts?.pageSize ?? 20)),
+            total: Number(res?.total ?? items.length)
+          };
+        })
+      );
   }
 
   public lookupClient(empresa_id: number, nit_ci: string): Observable<PosLookupClientResponse> {
-    const qs = `?nit_ci=${encodeURIComponent(String(nit_ci || '').trim())}`;
-    return this._api.get<PosLookupClientResponse>(`/tenant/pos/${empresa_id}/clients/lookup${qs}`);
+    return this._api.get<PosLookupClientResponse>(`/tenant/pos/${empresa_id}/clients/lookup`, {
+      query: { nit_ci: String(nit_ci || '').trim() }
+    });
   }
 
   public createClient(empresa_id: number, payload: PosCreateClientPayload): Observable<PosClient> {
@@ -156,8 +157,8 @@ export class TenantPosApi {
   public createSale(empresa_id: number, payload: PosCreateSalePayload): Observable<PosCreateSaleResponse> {
     return this._api.post<PosCreateSaleResponse>(`/tenant/pos/${empresa_id}/sales`, payload);
   }
-  public downloadReceipt(ventaId: number) {
+
+  public downloadReceipt(ventaId: number): Observable<Blob> {
     return this._api.getBlob(`/tenant/pos/sales/${encodeURIComponent(String(ventaId))}/receipt.pdf`);
   }
-
 }
